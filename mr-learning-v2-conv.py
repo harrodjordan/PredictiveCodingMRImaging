@@ -15,6 +15,7 @@ import os, os.path
 import tkinter as Tk
 from tkinter import filedialog
 from tkinter import *
+#import montage_wrapper as montage
 
 
 def weight_variable(shape):
@@ -151,17 +152,10 @@ for (clean, artif) in zip(clean_imgs, artifact_imgs) :
 # labels need to be fixed
 label_train = np.matrix([1,0]*7)
 label_train = np.repeat(label_train[:, :, np.newaxis], 99, axis=2)
-print(label_train.shape)
 label_valid = np.matrix([1,0]*3)
 label_valid = np.repeat(label_valid[:, :, np.newaxis], 99, axis=2)
 label_test = np.matrix([1,0]*3)
 label_test = np.repeat(label_test[:, :, np.newaxis], 99, axis=2)
-
-
-#label_train = ([0, 1])*25 
-#label_valid = ([0, 1])*15 
-#label_test = ([0, 1])*10 
-
 
 
 # figure out what these variables should be when dealing with 3D matrix
@@ -237,15 +231,15 @@ for i in range(n_epochs):
 		batch_ys = np.asarray(label_train[batch])
 		
 		sess.run(optimizer, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5})
-	print(sess.run(accuracy, feed_dict={
-								x: imgs_valid,
-								y: label_valid,
+
+	for batch in range(6):
+		print(sess.run(accuracy, feed_dict={
+								x: imgs_valid[batch],
+								y: label_valid[batch],
 								keep_prob: 1.0
 					}))
 
 
 
-W = sess.run(W_conv1)
-plt.imshow(montage(W / np.max(W)), cmap='coolwarm')
 
 

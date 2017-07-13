@@ -56,14 +56,13 @@ count = 0
 
 for image in imgs:
     
-    temp_complex = image[128:256, :]
+    temp_complex = image[:, 128:256]
 
-    temp_real = image[0:128,:]
+    temp_real = image[:,0:128]
     
     complex_images.append(temp_complex) #change this to include the entire right half instead of just one pixel
     real_images.append(temp_real)
     #count = count + 1
-
 
 #reconstruct while introducing random motion artifacts (use 3310 code)
 
@@ -92,46 +91,17 @@ temp = np.asarray(new_complex)
 print(temp.shape)
 
 for (real, comp) in zip(real_images, new_complex):
-    temp_image = np.empty((128, 256))
+    temp_image = np.empty((256, 256))
     real = np.asarray(real)
     comp = np.asarray(comp)
-    for x in range(0, 127):
-        for y in range(0, 255):
-            
-            temp_image[x,y] = (abs(np.asarray([real[x, y], complex(0,comp[x,y])])))[1]
+    temp_image[:,0:128] = real 
+    temp_image[:,128:256] = abs(comp)
     sum_images.append(temp_image)
 
 sum_images = np.asarray(sum_images)
 
-clean_images = []
-
-for (real, comp) in zip(real_images, complex_images):
-    temp_image = np.empty((128, 256))
-    real = np.asarray(real)
-    comp = np.asarray(comp)
-    for x in range(0, 127):
-        for y in range(0, 255):
-            
-            #temp_image[x,y] = (abs(np.asarray([real[x, y], complex(0,comp[x,y])])))[1]
-            temp_image[x,y] = (abs(np.asarray([real[x, y]])))[1]
-            temp_image[x+128, y] = abs(complex(0,comp[x,y])[1]
-
-    clean_images.append(temp_image)
-
-clean_images = np.asarray(sum_images)
 
 #save to a different directory
-file_path = "/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifacts"
-
-if not os.path.isdir(file_path):
-    os.makedirs(file_path)
-
-for (f, image) in zip(os.listdir(path), clean_images):
-
-    save_path = file_path + "/" + f
-
-    plot.image.imsave(save_path, image)
-
 
 file_path = "/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifacts"
 
