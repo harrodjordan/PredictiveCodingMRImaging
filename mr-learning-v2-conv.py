@@ -5,7 +5,9 @@
 # The purpose of this code is to create a neural network that performs binary classification on MRI images with and without motion artifacts
 # Artifacts have been introduced into images using mr-artifacts-v1.py, imported here 
 
-#to do - figure out how to 
+#to do 
+# create a plot of y: fraction of misses (accuracy) x: probability of having an artifact (y_true)
+# randomize the f
 
 import numpy as np
 import tensorflow as tf
@@ -15,7 +17,6 @@ import os, os.path
 import tkinter as Tk
 from tkinter import filedialog
 from tkinter import *
-#import montage_wrapper as montage
 
 
 def weight_variable(shape):
@@ -215,6 +216,9 @@ optimizer = tf.train.AdamOptimizer().minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_pred, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
 
+# Create a graph of y: fraction of misses (accuracy) x: probability of having an artifact (y_true)
+#performance = plt.plot(y,accuracy)
+
 # deal with this section once everything else is fixed
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
@@ -224,6 +228,9 @@ n_epochs = 10
 batch_xs = []
 batch_ys = []
 
+fraction_miss = []
+prob_artifact = []
+
 for i in range(n_epochs):
 	for batch in range(batch_size):
 
@@ -232,12 +239,25 @@ for i in range(n_epochs):
 		
 		sess.run(optimizer, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5})
 
+		fraction_miss.append(sess.run(accuracy, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5}))
+		prob_artifact.append(sess.run(y_pred, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5}))
+
 	for batch in range(6):
 		print(sess.run(accuracy, feed_dict={
 								x: imgs_valid[batch],
 								y: label_valid[batch],
 								keep_prob: 1.0
 					}))
+		fraction_miss.append(sess.run(accuracy, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 1.0}))
+		prob_artifact.append(sess.run(y_pred, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 1.0}))
+
+prob_artifact = np.mean(prob_artifact[:],axis = 1)
+prob_artifact = np.mean(prob_artifact[:],axis = 1)
+plt.plot(prob_artifact, fraction_miss)
+plt.show()
+
+
+	
 
 
 
