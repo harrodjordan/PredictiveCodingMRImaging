@@ -217,7 +217,7 @@ correct_prediction = tf.equal(tf.argmax(y_pred, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
 
 # Create a graph of y: fraction of misses (accuracy) x: probability of having an artifact (y_true)
-#performance = plt.plot(y,accuracy)
+
 
 # deal with this section once everything else is fixed
 sess = tf.Session()
@@ -240,7 +240,7 @@ for i in range(n_epochs):
 		sess.run(optimizer, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5})
 
 		fraction_miss.append(sess.run(accuracy, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5}))
-		prob_artifact.append(sess.run(y_pred, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5}))
+		prob_artifact.append(np.mean(sess.run(y_pred, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5})))
 
 	for batch in range(6):
 		print(sess.run(accuracy, feed_dict={
@@ -248,11 +248,12 @@ for i in range(n_epochs):
 								y: label_valid[batch],
 								keep_prob: 1.0
 					}))
-		fraction_miss.append(sess.run(accuracy, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 1.0}))
-		prob_artifact.append(sess.run(y_pred, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 1.0}))
+		fraction_miss.append(sess.run(accuracy, feed_dict={x: imgs_valid[batch], y: label_valid[batch], keep_prob: 1.0}))
+		prob_artifact.append(np.mean(sess.run(y_pred, feed_dict={x: imgs_valid[batch], y:label_valid[batch], keep_prob: 1.0})))
 
-prob_artifact = np.mean(prob_artifact[:],axis = 1)
-prob_artifact = np.mean(prob_artifact[:],axis = 1)
+#prob_artifact = np.mean(prob_artifact[:],axis = 1)
+#prob_artifact = np.mean(prob_artifact[:],axis = 1)
+print(prob_artifact)
 plt.plot(prob_artifact, fraction_miss)
 plt.show()
 

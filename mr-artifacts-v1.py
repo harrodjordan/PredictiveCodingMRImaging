@@ -14,6 +14,7 @@ import matplotlib as plot
 import os, os.path
 from PIL import Image
 from scipy import ndimage
+import random as rand 
 
 
 #import images
@@ -72,6 +73,7 @@ for image in imgs:
 new_complex = []
 temp_fourier = []
 count = 0
+rand_num = rand.random()*10
 
 for image in complex_images:
     image.setflags(write=1)
@@ -84,6 +86,8 @@ for image in complex_images:
     temp_fourier = np.fft.ifft2(temp_fourier)
 
     new_complex.append(temp_fourier)
+
+    rand_num = rand.random()*10
 
 	
 # alternatively, create wrap around by reducing the sampling frequency in the phase-encoding direction
@@ -103,7 +107,7 @@ sum_images = np.asarray(sum_images)
 
 #save to a different directory
 
-file_path = "/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifacts"
+file_path = "/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom"
 
 if not os.path.isdir(file_path):
     os.makedirs(file_path)
