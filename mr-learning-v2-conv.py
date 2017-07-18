@@ -206,7 +206,7 @@ h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 W_fc2 = weight_variable([n_fc, 99])
 b_fc2 = bias_variable([99])
-y_pred = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
+y_pred = tf.nn.log_softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
 # %% Define loss/eval/training functions
 cross_entropy = -tf.reduce_sum(y * tf.log(y_pred))
@@ -242,19 +242,20 @@ for i in range(n_epochs):
 		fraction_miss.append(sess.run(accuracy, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5}))
 		prob_artifact.append(np.mean(sess.run(y_pred, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5})))
 
-	for batch in range(6):
-		print(sess.run(W_conv1, feed_dict={
+
+for batch in range(6):
+	print(sess.run(accuracy, feed_dict={
 								x: imgs_valid[batch],
 								y: label_valid[batch],
 								keep_prob: 1.0
 					}))
-		fraction_miss.append(sess.run(accuracy, feed_dict={x: imgs_valid[batch], y: label_valid[batch], keep_prob: 1.0}))
-		prob_artifact.append(np.mean(sess.run(y_pred, feed_dict={x: imgs_valid[batch], y:label_valid[batch], keep_prob: 1.0})))
+
+	
 
 #prob_artifact = np.mean(prob_artifact[:],axis = 1)
 #prob_artifact = np.mean(prob_artifact[:],axis = 1)
-print(prob_artifact)
-plt.plot(prob_artifact, fraction_miss)
+print(type(prob_artifact[1]))
+plt.plot(np.asarray(prob_artifact), np.asarray(fraction_miss))
 plt.show()
 
 
