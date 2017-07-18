@@ -243,7 +243,7 @@ for i in range(n_epochs):
 		prob_artifact.append(np.mean(sess.run(y_pred, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5})))
 
 	for batch in range(6):
-		print(sess.run(accuracy, feed_dict={
+		print(sess.run(W_conv1, feed_dict={
 								x: imgs_valid[batch],
 								y: label_valid[batch],
 								keep_prob: 1.0
