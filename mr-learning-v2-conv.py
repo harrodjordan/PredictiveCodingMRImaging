@@ -172,7 +172,7 @@ x_tensor = tf.reshape(x, [-1, 256, 256, 99])
 y = tf.placeholder(tf.float32, [1, 99]) #check this later 
 
 filter_size = 4
-n_filters_1 = 16
+n_filters_1 = 4
 W_conv1 = weight_variable([filter_size, filter_size, 99, n_filters_1])
 
 b_conv1 = bias_variable([n_filters_1])
@@ -180,23 +180,24 @@ b_conv1 = bias_variable([n_filters_1])
 h_conv1 = tf.nn.relu(
     tf.nn.conv2d(input=x_tensor,
                  filter=W_conv1,
-                 strides=[1, 2, 2, 1],
+                 strides=[1, 2, 2, 99],
                  padding='SAME') +
     b_conv1)
 
-n_filters_2 = 16
+n_filters_2 = 4
 W_conv2 = weight_variable([filter_size, filter_size, n_filters_1, n_filters_2])
 b_conv2 = bias_variable([n_filters_2])
 h_conv2 = tf.nn.relu(
     tf.nn.conv2d(input=h_conv1,
                  filter=W_conv2,
-                 strides=[1, 2, 2, 1],
+                 strides=[1, 2, 2, 99],
                  padding='SAME') +
     b_conv2)
 
 h_conv2_flat = tf.reshape(h_conv2, [-1, 4 * 4 * n_filters_2])
 
-n_fc = 1024
+#n_fc = 4*4*number of feature maps 
+n_fc = 1024 #this one needs to be changed maybe 
 W_fc1 = weight_variable([4 * 4 * n_filters_2, n_fc])
 b_fc1 = bias_variable([n_fc])
 h_fc1 = tf.nn.relu(tf.matmul(h_conv2_flat, W_fc1) + b_fc1)
@@ -204,7 +205,7 @@ h_fc1 = tf.nn.relu(tf.matmul(h_conv2_flat, W_fc1) + b_fc1)
 keep_prob = tf.placeholder(tf.float32)
 h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-W_fc2 = weight_variable([n_fc, 99])
+W_fc2 = weight_variable([n_fc, 99]) #and then possibly this 
 b_fc2 = bias_variable([99])
 y_pred = tf.nn.log_softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
