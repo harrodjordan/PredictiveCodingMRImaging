@@ -18,6 +18,7 @@ import tkinter as Tk
 from tkinter import filedialog
 from tkinter import *
 
+FLAGS = None
 
 def weight_variable(shape):
   initial = tf.truncated_normal(shape, stddev=0.1)
@@ -28,8 +29,23 @@ def bias_variable(shape):
   return tf.Variable(initial)
 
 def split_at(s, c, n):
-    words = s.split(c)
-    return c.join(words[:n]), c.join(words[n:])
+	words = s.split(c)
+	return c.join(words[:n]), c.join(words[n:])
+
+def variable_summaries(var):
+	"""Attach a lot of summaries to a Tensor (for TensorBoard visualization)."""
+	with tf.name_scope('summaries'):
+		mean = tf.reduce_mean(var)
+		tf.summary.scalar('mean', mean)
+	
+	with tf.name_scope('stddev'):
+		stddev = tf.sqrt(tf.reduce_mean(tf.square(var - mean)))
+	
+	tf.summary.scalar('stddev', stddev)
+	tf.summary.scalar('max', tf.reduce_max(var))
+	tf.summary.scalar('min', tf.reduce_min(var))
+	tf.summary.histogram('histogram', var)
+
 
 file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases'
 artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifacts'
@@ -178,20 +194,20 @@ W_conv1 = weight_variable([filter_size, filter_size, 99, n_filters_1])
 b_conv1 = bias_variable([n_filters_1*99])
 
 h_conv1 = tf.nn.relu(
-    tf.nn.depthwise_conv2d(input=x_tensor,
-                 filter=W_conv1,
-                 strides=[1, 2, 2, 1],
-                 padding='SAME') + b_conv1)
+	tf.nn.depthwise_conv2d(input=x_tensor,
+				 filter=W_conv1,
+				 strides=[1, 2, 2, 1],
+				 padding='SAME') + b_conv1)
 
 n_filters_2 = 4
 W_conv2 = weight_variable([filter_size, filter_size, 396, n_filters_2])
 b_conv2 = bias_variable([n_filters_2*396])
 h_conv2 = tf.nn.relu(
-    tf.nn.depthwise_conv2d(input=h_conv1,
-                 filter=W_conv2,
-                 strides=[1, 2, 2, 1],
-                 padding='SAME') +
-    b_conv2)
+	tf.nn.depthwise_conv2d(input=h_conv1,
+				 filter=W_conv2,
+				 strides=[1, 2, 2, 1],
+				 padding='SAME') +
+	b_conv2)
 
 h_conv2_flat = tf.reshape(h_conv2, [-1, 4 * 4 * n_filters_2])
 
@@ -218,7 +234,7 @@ prob = tf.reduce_mean(y_pred)
 #correct_prediction = tf.equal(np.mean(y_pred, True), tf.argmax(y, 1))
 
 correct_prediction =  tf.cond((prob >= 0.5), lambda: tf.add(1,0), lambda: tf.add(0,0))
-correct_prediction = tf.equal(tf.to_float(correct_prediction), y) #always returning false
+correct_prediction = tf.equal(tf.to_float(correct_prediction), tf.to_float(y)) #always returning false
 
 
 #accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
@@ -250,14 +266,16 @@ for i in range(n_epochs):
 
 
 for batch in range(6):
-	print(sess.run(y_pred, feed_dict={x:imgs_valid[batch],y:label_valid[batch], keep_prob: 1.0}))
+	print(tf.to_float(sess.run(y_pred, feed_dict={x:imgs_valid[batch],y:label_valid[batch], keep_prob: 1.0})))
 	everything.append(tf.to_float(sess.run(correct_prediction, feed_dict={
 								x: imgs_valid[batch],
 								y: label_valid[batch],
 								keep_prob: 1.0
 					})))
+
 correct = tf.to_float(everything)
-print(everything)
+plt.plot(correct[0][:], correct[1][:])
+plt.show()
 	
 	
 
