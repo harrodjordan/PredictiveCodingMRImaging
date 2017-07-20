@@ -218,6 +218,7 @@ prob = tf.reduce_mean(y_pred)
 #correct_prediction = tf.equal(np.mean(y_pred, True), tf.argmax(y, 1))
 
 correct_prediction =  tf.cond((prob >= 0.5), lambda: tf.add(1,0), lambda: tf.add(0,0))
+correct_prediction = tf.equal(tf.to_float(correct_prediction), y) #always returning false
 
 
 #accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
@@ -249,11 +250,12 @@ for i in range(n_epochs):
 
 
 for batch in range(6):
-	everything.append(sess.run([correct_prediction, prob], feed_dict={
+	print(sess.run(y_pred, feed_dict={x:imgs_valid[batch],y:label_valid[batch], keep_prob: 1.0}))
+	everything.append(tf.to_float(sess.run(correct_prediction, feed_dict={
 								x: imgs_valid[batch],
 								y: label_valid[batch],
 								keep_prob: 1.0
-					}))
+					})))
 correct = tf.to_float(everything)
 print(everything)
 	
