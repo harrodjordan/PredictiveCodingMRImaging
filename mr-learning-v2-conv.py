@@ -175,22 +175,21 @@ filter_size = 4
 n_filters_1 = 4
 W_conv1 = weight_variable([filter_size, filter_size, 99, n_filters_1])
 
-b_conv1 = bias_variable([n_filters_1])
+b_conv1 = bias_variable([n_filters_1*99])
 
 h_conv1 = tf.nn.relu(
-    tf.nn.conv2d(input=x_tensor,
+    tf.nn.depthwise_conv2d(input=x_tensor,
                  filter=W_conv1,
-                 strides=[1, 2, 2, 99],
-                 padding='SAME') +
-    b_conv1)
+                 strides=[1, 2, 2, 1],
+                 padding='SAME') + b_conv1)
 
 n_filters_2 = 4
-W_conv2 = weight_variable([filter_size, filter_size, n_filters_1, n_filters_2])
-b_conv2 = bias_variable([n_filters_2])
+W_conv2 = weight_variable([filter_size, filter_size, 396, n_filters_2])
+b_conv2 = bias_variable([n_filters_2*396])
 h_conv2 = tf.nn.relu(
-    tf.nn.conv2d(input=h_conv1,
+    tf.nn.depthwise_conv2d(input=h_conv1,
                  filter=W_conv2,
-                 strides=[1, 2, 2, 99],
+                 strides=[1, 2, 2, 1],
                  padding='SAME') +
     b_conv2)
 
@@ -214,8 +213,14 @@ cross_entropy = -tf.reduce_sum(y * tf.log(y_pred))
 optimizer = tf.train.AdamOptimizer().minimize(cross_entropy)
 
 # %% Monitor accuracy
-correct_prediction = tf.equal(tf.argmax(y_pred, 1), tf.argmax(y, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
+
+prob = tf.reduce_mean(y_pred)
+#correct_prediction = tf.equal(np.mean(y_pred, True), tf.argmax(y, 1))
+
+correct_prediction =  tf.cond((prob >= 0.5), lambda: tf.add(1,0), lambda: tf.add(0,0))
+
+
+#accuracy = tf.reduce_mean(tf.cast(correct_prediction, 'float'))
 
 # Create a graph of y: fraction of misses (accuracy) x: probability of having an artifact (y_true)
 
@@ -231,6 +236,8 @@ batch_ys = []
 
 fraction_miss = []
 prob_artifact = []
+correct = []
+everything  = []
 
 for i in range(n_epochs):
 	for batch in range(batch_size):
@@ -238,26 +245,20 @@ for i in range(n_epochs):
 		batch_xs = np.asarray(imgs_train[batch][:][:][:])
 		batch_ys = np.asarray(label_train[batch])
 		
-		sess.run(optimizer, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5})
-
-		fraction_miss.append(sess.run(accuracy, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5}))
-		prob_artifact.append(np.mean(sess.run(y_pred, feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5})))
+		sess.run(optimizer,  feed_dict={x: batch_xs , y: batch_ys, keep_prob: 0.5})	
 
 
 for batch in range(6):
-	print(sess.run(accuracy, feed_dict={
+	everything.append(sess.run([correct_prediction, prob], feed_dict={
 								x: imgs_valid[batch],
 								y: label_valid[batch],
 								keep_prob: 1.0
 					}))
-
+correct = tf.to_float(everything)
+print(everything)
+	
 	
 
-#prob_artifact = np.mean(prob_artifact[:],axis = 1)
-#prob_artifact = np.mean(prob_artifact[:],axis = 1)
-print(type(prob_artifact[1]))
-plt.plot(np.asarray(prob_artifact), np.asarray(fraction_miss))
-plt.show()
 
 
 	
