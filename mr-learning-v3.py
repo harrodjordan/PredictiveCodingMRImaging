@@ -17,6 +17,9 @@ import os, os.path
 import tkinter as Tk
 from tkinter import filedialog
 from tkinter import *
+from tensorflow.python import debug as tf_debug
+
+
 
 
 import argparse
@@ -149,14 +152,16 @@ def train():
 			continue
 
 # labels need to be fixed
-	label_train = np.matrix([0,0,1,0]*7)
+	label_train = np.matrix([1,0]*7)
 	label_train = np.repeat(label_train[:, :, np.newaxis], 99, axis=2)
-	label_valid = np.matrix([0,0,1,0]*3)
+	label_valid = np.matrix([1,0]*3)
 	label_valid = np.repeat(label_valid[:, :, np.newaxis], 99, axis=2)
-	label_test = np.matrix([0,0,1,0]*3)
+	label_test = np.matrix([1,0]*3)
 	label_test = np.repeat(label_test[:, :, np.newaxis], 99, axis=2)
 
 	sess = tf.InteractiveSession()
+	#sess = tf_debug.LocalCLIDebugWrapperSession(sess)
+	#sess.add_tensor_filter("has_inf_or_nan", tf_debug.has_inf_or_nan)
   # Create a multilayer model.
 
   # Input placeholders
@@ -166,7 +171,8 @@ def train():
 
 	with tf.name_scope('input_reshape'):
 		x_tensor = tf.reshape(x, [-1, 256, 256, 99]) 
-		tf.summary.image('input', x_tensor, 99)
+		ex = weight_variable([99, 256, 256, 1])
+		tf.summary.image('input', ex, 99)
 
 
 
@@ -204,18 +210,19 @@ def train():
 				tf.summary.histogram('pre_activations', preactivate)
 
 			with tf.name_scope('pool'):
-				ksize = [1, 2, 2, 1]
-				strides = [1, 2, 2, poolstride]
+				ksize = [1, 1, 1, 1]
+				strides = [1, 1, 1, poolstride]
 				out_layer = tf.nn.max_pool(preactivate, ksize=ksize, strides=strides, 
                                padding='SAME')
 				tf.summary.histogram('pooling', out_layer)
 		
 			activations = act(out_layer, name='activation')
-			tf.summary.histogram('activations', out_layer)
+			tf.summary.histogram('activations', activations)
 			return activations
 
 	n_input = 4
 	n_filters = 4
+
 
 
 	hidden1 = nn_layer(x_tensor, n_input, 99, n_filters, 'layer1', 1)
@@ -234,7 +241,7 @@ def train():
 	
 
 	# Do not apply softmax activation yet, see below.
-	y_ = nn_layer(dropped, n_input, 396, 1, 'layer8', 4, act=tf.identity)
+	y_ = nn_layer(dropped, n_input, 396, 1, 'layer8',64 , act=tf.identity)
 
 
 	with tf.name_scope('cross_entropy'):
@@ -290,7 +297,7 @@ def train():
 		batch_ys = np.asarray(label_train[num])
 		k = FLAGS.dropout
 		
-		return {x: batch_xs, y_: batch_ys, keep_prob: k}
+		return {x: batch_xs, y: batch_ys, keep_prob: k}
 
 	batch_size = 14
 	n_epochs = 10
@@ -347,8 +354,10 @@ if __name__ == '__main__':
 	  type=str,
 	  default='/tmp/tensorflow/mnist/logs/mnist_with_summaries',
 	  help='Summaries log directory')
-FLAGS, unparsed = parser.parse_known_args()
-tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+
+	FLAGS, unparsed = parser.parse_known_args()
+	tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+
 
 
 
