@@ -44,7 +44,7 @@ def train():
 		return c.join(words[:n]), c.join(words[n:])
   # Import data
 	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases'
-	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifacts'
+	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom'
 
 
 	clean_imgs = []
@@ -63,14 +63,15 @@ def train():
 		if patient not in listofnames:
 
 			listofnames.append(patient)
-			listofnames = listofnames[1:]
+	
+	listofnames = listofnames[1:]
 
 	
 
 	valid_images = [".jpg"]
 
 	for person in listofnames:
-		for f in os.listdir(file_path):
+		for f in os.listdir(path):
 		
 			ext = os.path.splitext(f)[1]
 
@@ -98,7 +99,7 @@ def train():
 
 
 	for person in listofnames:
-		for f in os.listdir(file_path):
+		for f in os.listdir(path):
 		
 			ext = os.path.splitext(f)[1]
 		
@@ -133,7 +134,7 @@ def train():
 #last 10 to test list 
 
 	for (clean, artif) in zip(clean_imgs, artifact_imgs) :
-
+		#print(count)
 		if 0 < count <= 7:
 			imgs_train.append(clean)
 			imgs_train.append(artif)
@@ -145,12 +146,12 @@ def train():
 			count = count + 1
 			continue
 
-		if count >= 13:
+		if count > 10:
 			imgs_test.append(clean)
 			imgs_test.append(artif)
 			count = count + 1
 			continue
-
+	
 # labels need to be fixed
 	label_train = np.matrix([1,0]*7)
 	label_train = np.repeat(label_train[:, :, np.newaxis], 99, axis=2)
@@ -282,7 +283,7 @@ def train():
 	tf.summary.scalar('accuracy', accuracy)
 
   # Merge all the summaries and write them out to
-  # /tmp/tensorflow/mnist/logs/mnist_with_summaries (by default)
+  # git (by default)
 	merged = tf.summary.merge_all()
 	train_writer = tf.summary.FileWriter(FLAGS.log_dir + '/train', sess.graph)
 	test_writer = tf.summary.FileWriter(FLAGS.log_dir + '/test')
@@ -294,7 +295,7 @@ def train():
 
 	def feed_dict(num):
 
-		print(np.asarray(imgs_train).shape)
+		#print(np.asarray(imgs_train).shape)
 		batch_xs = np.asarray(imgs_train[num][:][:][:])
 		batch_ys = np.asarray(label_train[num])
 		k = FLAGS.dropout
@@ -303,11 +304,13 @@ def train():
 
 	batch_size = 14
 	n_epochs = 10
-
+	#print(np.asarray(imgs_train).shape)
+	#print(np.asarray(imgs_valid).shape)
+	#print(np.asarray(imgs_test).shape)
 	for i in range(n_epochs):
 		for batch in range((np.asarray(imgs_train).shape)[0]):
-			print(i)
-			print(batch)
+			#print(i)
+			#print(batch)
 			if i % 2 == 0:  # Record summaries and test-set accuracy
 				summary, acc = sess.run([merged, accuracy], feed_dict=feed_dict(batch))
 				test_writer.add_summary(summary, i)
