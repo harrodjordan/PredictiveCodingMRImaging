@@ -201,7 +201,7 @@ def train():
 				variable_summaries(weights)
 		
 			with tf.name_scope('biases'):
-				biases = bias_variable([n_filters_1*depth])
+				biases = bias_variable([depth*n_filters_1])
 				variable_summaries(biases)
 		
 			with tf.name_scope('Wx_plus_b'):
@@ -221,17 +221,19 @@ def train():
 			return activations
 
 	n_input = 4
-	n_filters = 4
+	n_filters = 1
 
 
 
 	hidden1 = nn_layer(x_tensor, n_input, 99, n_filters, 'layer1', 1)
-	hidden2 = nn_layer(hidden1, n_input, 396, n_filters, 'layer2', 1)
-	hidden3 = nn_layer(hidden2, n_input, 1584, n_filters, 'layer3', 1)
-	hidden4 = nn_layer(hidden3, n_input, 6336, n_filters, 'layer4', 1)
-	hidden5 = nn_layer(hidden4, n_input, 25344, n_filters, 'layer5', 16)
-	hidden6 = nn_layer(hidden5, n_input, 6336, n_filters, 'layer6', 16)
-	hidden7 = nn_layer(hidden6, n_input, 1584, n_filters, 'layer7', 16)
+	hidden2 = nn_layer(hidden1, n_input, 99, n_filters, 'layer2', 1)
+	hidden3 = nn_layer(hidden2, n_input, 99, n_filters, 'layer3', 1)
+	hidden4 = nn_layer(hidden3, n_input, 99, n_filters, 'layer4', 1)
+	hidden5 = nn_layer(hidden4, n_input, 99, n_filters, 'layer5', 1)
+	hidden6 = nn_layer(hidden5, n_input, 99, n_filters, 'layer6', 1)
+	#hidden6 = nn_layer(hidden5, n_input, 101376, n_filters, 'layer6', 16)
+	hidden7 = nn_layer(hidden6, n_input, 99, n_filters, 'layer8', 1 )
+	#hidden7 = nn_layer(hidden6, n_input, 1584, n_filters, 'layer7', 16)
 
 	with tf.name_scope('dropout'):
 		keep_prob = tf.placeholder(tf.float32)
@@ -241,7 +243,7 @@ def train():
 	
 
 	# Do not apply softmax activation yet, see below.
-	y_ = nn_layer(dropped, n_input, 396, 1, 'layer8',64 , act=tf.identity)
+	y_ = nn_layer(dropped, n_input, 99, 1, 'layer8',1 , act=tf.identity)
 
 
 	with tf.name_scope('cross_entropy'):
@@ -255,7 +257,7 @@ def train():
 	# So here we use tf.nn.softmax_cross_entropy_with_logits on the
 	# raw outputs of the nn_layer above, and then average across
 	# the batch.
-
+		#print(y_.shape)
 		diff = tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=y_)
 		
 		with tf.name_scope('total'):
@@ -292,7 +294,7 @@ def train():
 
 	def feed_dict(num):
 
-		
+		print(np.asarray(imgs_train).shape)
 		batch_xs = np.asarray(imgs_train[num][:][:][:])
 		batch_ys = np.asarray(label_train[num])
 		k = FLAGS.dropout
@@ -303,13 +305,15 @@ def train():
 	n_epochs = 10
 
 	for i in range(n_epochs):
-		for batch in range(batch_size):
-			if i % 5 == 0:  # Record summaries and test-set accuracy
+		for batch in range((np.asarray(imgs_train).shape)[0]):
+			print(i)
+			print(batch)
+			if i % 2 == 0:  # Record summaries and test-set accuracy
 				summary, acc = sess.run([merged, accuracy], feed_dict=feed_dict(batch))
 				test_writer.add_summary(summary, i)
 				print('Accuracy at step %s: %s' % (i, acc))
 			else:  # Record train set summaries, and train
-				if i % 100 == 99:  # Record execution stats
+				if i % 5 == 99:  # Record execution stats
 					run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
 					run_metadata = tf.RunMetadata()
 					summary, _ = sess.run([merged, train_step],
