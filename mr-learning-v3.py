@@ -169,11 +169,16 @@ def train():
 	with tf.name_scope('input'):
 		x = tf.placeholder(tf.float32, [99, 256, 256])
 		y = tf.placeholder(tf.float32, [1, 99]) 
+		ex = tf.slice(x,[0,0,0],[1,-1,-1])
+		ex = ex[:,:,:, np.newaxis]
+		tf.summary.image('input', ex,1)
 
 	with tf.name_scope('input_reshape'):
-		x_tensor = tf.reshape(x, [-1, 256, 256, 99]) 
-		ex = weight_variable([99, 256, 256, 1])
-		tf.summary.image('input', ex, 99)
+		#x_tensor = tf.reshape(x, [-1, 256, 256, 99]) 
+		x_tensor = x[:,:,:, np.newaxis]
+		x_tensor = tf.transpose(x_tensor, perm = [3,1,2,0])
+		ex = tf.slice(x_tensor,[0,0,0,0],[-1,-1,-1,1])
+		tf.summary.image('input_reshape', ex, 1)
 
 
 
@@ -209,6 +214,8 @@ def train():
 				preactivate = tf.nn.depthwise_conv2d(input=input_tensor, filter=weights, 
 													strides=[1,2,2,1], padding='SAME') + biases
 				tf.summary.histogram('pre_activations', preactivate)
+				feature_map = tf.slice(preactivate,[0,0,0,0],[-1,-1,-1,1])
+				tf.summary.image(layer_name, feature_map,1)
 
 			with tf.name_scope('pool'):
 				ksize = [1, 1, 1, 1]
@@ -232,9 +239,8 @@ def train():
 	hidden4 = nn_layer(hidden3, n_input, 99, n_filters, 'layer4', 1)
 	hidden5 = nn_layer(hidden4, n_input, 99, n_filters, 'layer5', 1)
 	hidden6 = nn_layer(hidden5, n_input, 99, n_filters, 'layer6', 1)
-	#hidden6 = nn_layer(hidden5, n_input, 101376, n_filters, 'layer6', 16)
-	hidden7 = nn_layer(hidden6, n_input, 99, n_filters, 'layer8', 1 )
-	#hidden7 = nn_layer(hidden6, n_input, 1584, n_filters, 'layer7', 16)
+	hidden7 = nn_layer(hidden6, n_input, 99, n_filters, 'layer7', 1)
+	
 
 	with tf.name_scope('dropout'):
 		keep_prob = tf.placeholder(tf.float32)
@@ -259,12 +265,15 @@ def train():
 	# raw outputs of the nn_layer above, and then average across
 	# the batch.
 		#print(y_.shape)
-		diff = tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=y_)
+		
+		with tf.name_scope('soft_max'):
+			diff = tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=y_)
 		
 		with tf.name_scope('total'):
 			cross_entropy = tf.reduce_mean(diff)
 
 	tf.summary.scalar('cross_entropy', cross_entropy)
+
 
 	
 	with tf.name_scope('train'):
