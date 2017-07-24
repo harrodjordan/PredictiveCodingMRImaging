@@ -135,16 +135,16 @@ def train():
 
 	for (clean, artif) in zip(clean_imgs, artifact_imgs) :
 		#print(count)
-		if 0 < count <= 7:
+		if 0 < count <= 10:
 			imgs_train.append(clean)
 			imgs_train.append(artif)
 			count = count + 1
 			continue
-		if  8 <= count <= 10:
-			imgs_valid.append(clean)
-			imgs_valid.append(artif)
-			count = count + 1
-			continue
+		#if  8 <= count <= 10:
+			#imgs_valid.append(clean)
+			#imgs_valid.append(artif)
+			#count = count + 1
+			#continue
 
 		if count > 10:
 			imgs_test.append(clean)
@@ -153,10 +153,10 @@ def train():
 			continue
 	
 # labels need to be fixed
-	label_train = np.matrix([1,0]*7)
+	label_train = np.matrix([1,0]*10)
 	label_train = np.repeat(label_train[:, :, np.newaxis], 99, axis=2)
-	label_valid = np.matrix([1,0]*3)
-	label_valid = np.repeat(label_valid[:, :, np.newaxis], 99, axis=2)
+	#label_valid = np.matrix([1,0]*3)
+	#label_valid = np.repeat(label_valid[:, :, np.newaxis], 99, axis=2)
 	label_test = np.matrix([1,0]*3)
 	label_test = np.repeat(label_test[:, :, np.newaxis], 99, axis=2)
 
@@ -238,19 +238,24 @@ def train():
 	hidden3 = nn_layer(hidden2, n_input, 99, n_filters, 'layer3', 1)
 	hidden4 = nn_layer(hidden3, n_input, 99, n_filters, 'layer4', 1)
 	hidden5 = nn_layer(hidden4, n_input, 99, n_filters, 'layer5', 1)
-	hidden6 = nn_layer(hidden5, n_input, 99, n_filters, 'layer6', 1)
-	hidden7 = nn_layer(hidden6, n_input, 99, n_filters, 'layer7', 1)
+	#at layer 5, reduce sum of 16 pixels in each image and compare to labels 
+	#hidden6 = nn_layer(hidden5, n_input, 99, n_filters, 'layer6', 1)
+	#hidden7 = nn_layer(hidden6, n_input, 99, n_filters, 'layer7', 1)
 	
 
 	with tf.name_scope('dropout'):
 		keep_prob = tf.placeholder(tf.float32)
 		tf.summary.scalar('dropout_keep_probability', keep_prob)
-		dropped = tf.nn.dropout(hidden7, keep_prob)
+		dropped = tf.nn.dropout(hidden5, keep_prob)
 
 	
 
 	# Do not apply softmax activation yet, see below.
-	y_ = nn_layer(dropped, n_input, 99, 1, 'layer8',1 , act=tf.identity)
+	y_ = nn_layer(dropped, n_input, 99, 1, 'layer6',1 , act=tf.identity)
+	print(y_.shape)
+	y_ = tf.reduce_mean(y_, [1,2])
+	print(y_.shape)
+
 
 
 	with tf.name_scope('cross_entropy'):
@@ -273,6 +278,7 @@ def train():
 			cross_entropy = tf.reduce_mean(diff)
 
 	tf.summary.scalar('cross_entropy', cross_entropy)
+	tf.summary.histogram('soft_max',y_)
 
 
 	
@@ -284,7 +290,8 @@ def train():
 	with tf.name_scope('accuracy'):
 		
 		with tf.name_scope('correct_prediction'):
-			correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+			#correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
+			correct_prediction = tf.cond(tf.reduce_mean(y_) > 0.5, lambda: tf.add(0.0, 1.0), lambda: tf.add(0.0,0.0))
 		
 		with tf.name_scope('accuracy'):
 			accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -311,8 +318,8 @@ def train():
 		
 		return {x: batch_xs, y: batch_ys, keep_prob: k}
 
-	batch_size = 14
-	n_epochs = 10
+	batch_size = 20
+	n_epochs = 12
 	#print(np.asarray(imgs_train).shape)
 	#print(np.asarray(imgs_valid).shape)
 	#print(np.asarray(imgs_test).shape)
