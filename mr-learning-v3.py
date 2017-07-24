@@ -42,9 +42,12 @@ def train():
 	def split_at(s, c, n):
 		words = s.split(c)
 		return c.join(words[:n]), c.join(words[n:])
+
+
+
   # Import data
-	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases'
-	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom'
+	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2417'
+	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom-Jul2417'
 
 
 	clean_imgs = []
@@ -153,12 +156,12 @@ def train():
 			continue
 	
 # labels need to be fixed
-	label_train = np.matrix([1,0]*10)
+	label_train = np.matrix([1,0]*13)
 	label_train = np.repeat(label_train[:, :, np.newaxis], 99, axis=2)
 	#label_valid = np.matrix([1,0]*3)
 	#label_valid = np.repeat(label_valid[:, :, np.newaxis], 99, axis=2)
-	label_test = np.matrix([1,0]*3)
-	label_test = np.repeat(label_test[:, :, np.newaxis], 99, axis=2)
+	#label_test = np.matrix([1,0]*3)
+	#label_test = np.repeat(label_test[:, :, np.newaxis], 99, axis=2)
 
 	sess = tf.InteractiveSession()
 	#sess = tf_debug.LocalCLIDebugWrapperSession(sess)
@@ -167,7 +170,7 @@ def train():
 
   # Input placeholders
 	with tf.name_scope('input'):
-		x = tf.placeholder(tf.float32, [99, 256, 256])
+		x = tf.placeholder(tf.float32, [99, 256, 128])
 		y = tf.placeholder(tf.float32, [1, 99]) 
 		ex = tf.slice(x,[0,0,0],[1,-1,-1])
 		ex = ex[:,:,:, np.newaxis]
@@ -252,9 +255,9 @@ def train():
 
 	# Do not apply softmax activation yet, see below.
 	y_ = nn_layer(dropped, n_input, 99, 1, 'layer6',1 , act=tf.identity)
-	print(y_.shape)
+	
 	y_ = tf.reduce_mean(y_, [1,2])
-	print(y_.shape)
+	
 
 
 
@@ -272,10 +275,15 @@ def train():
 		#print(y_.shape)
 		
 		with tf.name_scope('soft_max'):
-			diff = tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=y_)
+			
+			#prob_Adjusted = tf.cast(tf.greater(y_, 0.5), tf.float32)
+
+			diff = tf.nn.sigmoid_cross_entropy_with_logits(labels=y, logits=y_)
+			#diff = tf.nn.softmax_cross_entropy_with_logits(labels=y,logits=prob_Adjusted)
 		
 		with tf.name_scope('total'):
 			cross_entropy = tf.reduce_mean(diff)
+			print(diff)
 
 	tf.summary.scalar('cross_entropy', cross_entropy)
 	tf.summary.histogram('soft_max',y_)
@@ -290,11 +298,11 @@ def train():
 	with tf.name_scope('accuracy'):
 		
 		with tf.name_scope('correct_prediction'):
-			#correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
-			correct_prediction = tf.cond(tf.reduce_mean(y_) > 0.5, lambda: tf.add(0.0, 1.0), lambda: tf.add(0.0,0.0))
+			prob_Adjusted = tf.cast(tf.greater(y_, 0.5), tf.float32)
+			correct_prediction = tf.equal(y, prob_Adjusted)
 		
 		with tf.name_scope('accuracy'):
-			accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+			accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 	
 	tf.summary.scalar('accuracy', accuracy)
 
@@ -318,8 +326,8 @@ def train():
 		
 		return {x: batch_xs, y: batch_ys, keep_prob: k}
 
-	batch_size = 20
-	n_epochs = 12
+	batch_size = 26
+	n_epochs = 100
 	#print(np.asarray(imgs_train).shape)
 	#print(np.asarray(imgs_valid).shape)
 	#print(np.asarray(imgs_test).shape)
@@ -327,7 +335,7 @@ def train():
 		for batch in range((np.asarray(imgs_train).shape)[0]):
 			#print(i)
 			#print(batch)
-			if i % 2 == 0:  # Record summaries and test-set accuracy
+			if i % 10 == 0:  # Record summaries and test-set accuracy
 				summary, acc = sess.run([merged, accuracy], feed_dict=feed_dict(batch))
 				test_writer.add_summary(summary, i)
 				print('Accuracy at step %s: %s' % (i, acc))
