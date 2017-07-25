@@ -46,8 +46,8 @@ def train():
 
 
   # Import data
-	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2417'
-	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom-Jul2417'
+	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2517'
+	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom-Jul2517'
 
 
 	clean_imgs = []
@@ -61,7 +61,7 @@ def train():
 
 	for f in os.listdir(file_path):
 
-		patient = split_at(f, "_",3)[0] #figure out what the parse function is 
+		patient = split_at(f, "_",3)[0]
 
 		if patient not in listofnames:
 

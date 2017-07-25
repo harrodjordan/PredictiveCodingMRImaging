@@ -92,18 +92,23 @@ for image in complex_images:
 	
 # alternatively, create wrap around by reducing the sampling frequency in the phase-encoding direction
 temp = np.asarray(new_complex)
+complex_num = 0
 #print(temp.shape)
 
 for (real, comp) in zip(real_images, complex_images):
     temp_image = np.empty((256, 128))
     real = np.asarray(real)
     comp = np.asarray(comp)
-    
+
     #for (x,y) in zip(range(256),range(128)):
         
-    temp_image = np.absolute(real, comp)
+    #temp_image = np.absolute(real, comp)
+        #complex_num = real[x,y]+(comp[x,y]*1j)
+        #temp_image[x,y] = np.absolute(complex_num)
+        
     #temp_image[:,0:128] = real
     #temp_image[:,128:256] = abs(comp)
+    temp_image = np.absolute(real+comp)
     sum_images.append(temp_image)
 
 sum_images = np.asarray(sum_images)
@@ -112,14 +117,14 @@ sum_images = np.asarray(sum_images)
 
 #save to a different directory
 
-file_path = "/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2417"
+file_path = "/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2517"
 
 if not os.path.isdir(file_path):
     os.makedirs(file_path)
 
 for (f, image) in zip(os.listdir(path), sum_images):
 
-    save_path = file_path + "/" + f + "noArtifactsRandomJul2417.jpg"
+    save_path = file_path + "/" + f + "noArtifactsRandomJul2517.jpg"
 
     image = np.asarray(np.absolute(image), dtype=float)
 
