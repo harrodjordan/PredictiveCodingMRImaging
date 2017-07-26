@@ -29,22 +29,14 @@ FLAGS = None
 
 
 
-def train():
 
-	def weight_variable(shape):
-		initial = tf.truncated_normal(shape, stddev=0.1)
-		return tf.Variable(initial)
 
-	def bias_variable(shape):
-		initial = tf.constant(0.1, shape=shape)
-		return tf.Variable(initial)
+
+def import_images():
 
 	def split_at(s, c, n):
 		words = s.split(c)
 		return c.join(words[:n]), c.join(words[n:])
-
-
-
   # Import data
 	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-175cases-REU-abs/train'
 	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
@@ -138,7 +130,7 @@ def train():
 
 	for (clean, artif) in zip(clean_imgs, artifact_imgs) :
 		#print(count)
-		if 0 < count <= 10:
+		#if 0 < count <= :
 			imgs_train.append(clean)
 			imgs_train.append(artif)
 			count = count + 1
@@ -149,19 +141,35 @@ def train():
 			#count = count + 1
 			#continue
 
-		if count > 10:
-			imgs_test.append(clean)
-			imgs_test.append(artif)
-			count = count + 1
-			continue
+		#if count > 10:
+			#imgs_test.append(clean)
+			#imgs_test.append(artif)
+			#count = count + 1
+			#continue
 	
 # labels need to be fixed
-	label_train = np.matrix([1,0]*13)
+	label_train = np.matrix([1,0]*130)
 	label_train = np.repeat(label_train[:, :, np.newaxis], 99, axis=2)
 	#label_valid = np.matrix([1,0]*3)
 	#label_valid = np.repeat(label_valid[:, :, np.newaxis], 99, axis=2)
 	#label_test = np.matrix([1,0]*3)
 	#label_test = np.repeat(label_test[:, :, np.newaxis], 99, axis=2)
+
+	return label_train, imgs_train
+
+def train(labels, images):
+
+	def weight_variable(shape):
+		initial = tf.truncated_normal(shape, stddev=0.1)
+		return tf.Variable(initial)
+
+	def bias_variable(shape):
+		initial = tf.constant(0.1, shape=shape)
+		return tf.Variable(initial)
+
+	def split_at(s, c, n):
+		words = s.split(c)
+		return c.join(words[:n]), c.join(words[n:])
 
 	sess = tf.InteractiveSession()
 	#sess = tf_debug.LocalCLIDebugWrapperSession(sess)
@@ -320,22 +328,22 @@ def train():
 	def feed_dict(num):
 
 		#print(np.asarray(imgs_train).shape)
-		batch_xs = np.asarray(imgs_train[num][:][:][:])
-		batch_ys = np.asarray(label_train[num])
+		batch_xs = np.asarray(images[num][:][:][:])
+		batch_ys = np.asarray(labels[num])
 		k = FLAGS.dropout
 		
 		return {x: batch_xs, y: batch_ys, keep_prob: k}
 
-	batch_size = 26
-	n_epochs = 100
+	batch_size = 260
+	n_epochs = 150
 	#print(np.asarray(imgs_train).shape)
 	#print(np.asarray(imgs_valid).shape)
 	#print(np.asarray(imgs_test).shape)
 	for i in range(n_epochs):
-		for batch in range((np.asarray(imgs_train).shape)[0]):
+		for batch in range((np.asarray(images).shape)[0]):
 			#print(i)
 			#print(batch)
-			if i % 10 == 0:  # Record summaries and test-set accuracy
+			if i % 15 == 0:  # Record summaries and test-set accuracy
 				summary, acc = sess.run([merged, accuracy], feed_dict=feed_dict(batch))
 				test_writer.add_summary(summary, i)
 				print('Accuracy at step %s: %s' % (i, acc))
@@ -361,7 +369,8 @@ def main(_):
 	if tf.gfile.Exists(FLAGS.log_dir):
 		tf.gfile.DeleteRecursively(FLAGS.log_dir)
 	tf.gfile.MakeDirs(FLAGS.log_dir)
-	train()
+	[labels, images] = import_images()
+	train(labels,images)
 
 
 if __name__ == '__main__':
