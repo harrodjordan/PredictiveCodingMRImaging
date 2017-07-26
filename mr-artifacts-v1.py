@@ -22,7 +22,7 @@ import random as rand
 
 imgs = []
 
-path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases'
+path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train'
 #path = image_path
 
 valid_images = [".jpg"]
@@ -95,7 +95,7 @@ temp = np.asarray(new_complex)
 complex_num = 0
 #print(temp.shape)
 
-for (real, comp) in zip(real_images, complex_images):
+for (real, comp) in zip(real_images, new_complex):
     temp_image = np.empty((256, 128))
     real = np.asarray(real)
     comp = np.asarray(comp)
@@ -117,14 +117,14 @@ sum_images = np.asarray(sum_images)
 
 #save to a different directory
 
-file_path = "/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2517"
+file_path = "/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact"
 
 if not os.path.isdir(file_path):
     os.makedirs(file_path)
 
 for (f, image) in zip(os.listdir(path), sum_images):
 
-    save_path = file_path + "/" + f + "noArtifactsRandomJul2517.jpg"
+    save_path = file_path + "/" + f + "train_artifact.jpg"
 
     image = np.asarray(np.absolute(image), dtype=float)
 

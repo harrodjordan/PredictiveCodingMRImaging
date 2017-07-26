@@ -46,8 +46,8 @@ def train():
 
 
   # Import data
-	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2517'
-	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom-Jul2517'
+	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-175cases-REU-abs/train'
+	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
 
 
 	clean_imgs = []
