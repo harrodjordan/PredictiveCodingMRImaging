@@ -38,9 +38,10 @@ def import_images():
 		words = s.split(c)
 		return c.join(words[:n]), c.join(words[n:])
   # Import data
-	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-175cases-REU-abs/train'
-	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
-
+	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-175cases-REU-abs/train'
+	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact
+	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2517'
+	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom-Jul2517'
 
 	clean_imgs = []
 	artifact_imgs = []
@@ -145,7 +146,7 @@ def import_images():
 			#imgs_test.append(clean)
 			#imgs_test.append(artif)
 			#count = count + 1
-			#continue
+			#continueg
 	
 # labels need to be fixed
 	label_train = np.matrix([1,0]*130)
@@ -334,19 +335,21 @@ def train(labels, images):
 		
 		return {x: batch_xs, y: batch_ys, keep_prob: k}
 
-	batch_size = 260
-	n_epochs = 150
+	acc_temp = []
+	batch_size = 26
+	n_epochs = 100
 	#print(np.asarray(imgs_train).shape)
 	#print(np.asarray(imgs_valid).shape)
 	#print(np.asarray(imgs_test).shape)
 	for i in range(n_epochs):
-		for batch in range((np.asarray(images).shape)[0]):
+		for batch in range(batch_size): #range(((np.asarray(images).shape)[0])-1):
 			#print(i)
 			#print(batch)
-			if i % 15 == 0:  # Record summaries and test-set accuracy
+			if i % 10 == 0:  # Record summaries and test-set accuracy
 				summary, acc = sess.run([merged, accuracy], feed_dict=feed_dict(batch))
-				test_writer.add_summary(summary, i)
-				print('Accuracy at step %s: %s' % (i, acc))
+				train_writer.add_summary(summary, i)
+				acc_temp.append(acc)
+				print('Accuracy at step %s: %s' % (i, np.mean(acc_temp)))
 			else:  # Record train set summaries, and train
 				if i % 5 == 99:  # Record execution stats
 					run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
@@ -362,6 +365,24 @@ def train(labels, images):
 					summary, _ = sess.run([merged, train_step], feed_dict=feed_dict(batch))
 					train_writer.add_summary(summary, i)
 	train_writer.close()
+
+def test(images, labels):
+
+	def feed_dict(num):
+
+		#print(np.asarray(imgs_train).shape)
+		batch_xs = np.asarray(images[num][:][:][:])
+		batch_ys = np.asarray(labels[num])
+		k = FLAGS.dropout
+		
+		return {x: batch_xs, y: batch_ys, keep_prob: k}
+
+	sess = tf.InteractiveSession()
+
+	for batch in range(test_size):
+		summary, accuracy = sess.run([merged, accuracy], feed_dict= feed_dict(batch))
+		test_writer.add_summary(summary,batch)
+
 	test_writer.close()
 
 
@@ -371,6 +392,7 @@ def main(_):
 	tf.gfile.MakeDirs(FLAGS.log_dir)
 	[labels, images] = import_images()
 	train(labels,images)
+	test(labels,images)
 
 
 if __name__ == '__main__':
