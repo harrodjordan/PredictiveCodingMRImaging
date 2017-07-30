@@ -38,10 +38,10 @@ def import_images():
 		words = s.split(c)
 		return c.join(words[:n]), c.join(words[n:])
   # Import data
-	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-175cases-REU-abs/train'
-	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact
-	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2517'
-	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom-Jul2517'
+	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_clean'
+	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
+	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2517'
+	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom-Jul2517'
 
 	clean_imgs = []
 	artifact_imgs = []
@@ -131,16 +131,16 @@ def import_images():
 
 	for (clean, artif) in zip(clean_imgs, artifact_imgs) :
 		#print(count)
-		#if 0 < count <= :
+		if 0 < count <= 12:
 			imgs_train.append(clean)
 			imgs_train.append(artif)
 			count = count + 1
 			continue
-		#if  8 <= count <= 10:
-			#imgs_valid.append(clean)
-			#imgs_valid.append(artif)
-			#count = count + 1
-			#continue
+		if  13 <= count <= 15:
+			imgs_valid.append(clean)
+			imgs_valid.append(artif)
+			count = count + 1
+			continue
 
 		#if count > 10:
 			#imgs_test.append(clean)
@@ -149,16 +149,16 @@ def import_images():
 			#continueg
 	
 # labels need to be fixed
-	label_train = np.matrix([1,0]*130)
+	label_train = np.matrix([1,0]*120)
 	label_train = np.repeat(label_train[:, :, np.newaxis], 99, axis=2)
-	#label_valid = np.matrix([1,0]*3)
-	#label_valid = np.repeat(label_valid[:, :, np.newaxis], 99, axis=2)
+	label_valid = np.matrix([1,0]*30)
+	label_valid = np.repeat(label_valid[:, :, np.newaxis], 99, axis=2)
 	#label_test = np.matrix([1,0]*3)
 	#label_test = np.repeat(label_test[:, :, np.newaxis], 99, axis=2)
 
-	return label_train, imgs_train
+	return label_train, imgs_train, label_valid, imgs_valid 
 
-def train(labels, images):
+def train(labels, images, vlabels, vimages):
 
 	def weight_variable(shape):
 		initial = tf.truncated_normal(shape, stddev=0.1)
@@ -335,9 +335,14 @@ def train(labels, images):
 		
 		return {x: batch_xs, y: batch_ys, keep_prob: k}
 
-	acc_temp = []
-	batch_size = 26
-	n_epochs = 100
+	def feed_dict_test(num):
+
+		batch_xs = np.asarray(vimages[num][:][:][:])
+		batch_ys = np.asarray(vlabels[num])
+		k = 1.0
+
+	batch_size = 23
+	n_epochs = 200
 	#print(np.asarray(imgs_train).shape)
 	#print(np.asarray(imgs_valid).shape)
 	#print(np.asarray(imgs_test).shape)
@@ -345,11 +350,13 @@ def train(labels, images):
 		for batch in range(batch_size): #range(((np.asarray(images).shape)[0])-1):
 			#print(i)
 			#print(batch)
-			if i % 10 == 0:  # Record summaries and test-set accuracy
+			acc_temp = []
+			if i % 50 == 0:  # Record summaries and test-set accuracy
 				summary, acc = sess.run([merged, accuracy], feed_dict=feed_dict(batch))
 				train_writer.add_summary(summary, i)
 				acc_temp.append(acc)
 				print('Accuracy at step %s: %s' % (i, np.mean(acc_temp)))
+
 			else:  # Record train set summaries, and train
 				if i % 5 == 99:  # Record execution stats
 					run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
@@ -366,33 +373,36 @@ def train(labels, images):
 					train_writer.add_summary(summary, i)
 	train_writer.close()
 
-def test(images, labels):
+	#test_size = 5
 
-	def feed_dict(num):
+	#for batch in range(test_size):
+		#summary, _ = sess.run([merged, accuracy], feed_dict= feed_dict_test(batch))
+		#test_writer.add_summary(summary,batch)
 
-		#print(np.asarray(imgs_train).shape)
-		batch_xs = np.asarray(images[num][:][:][:])
-		batch_ys = np.asarray(labels[num])
-		k = FLAGS.dropout
+	# Record train set summaries, and train
+		#if batch % 5 == 99:  # Record execution stats
+		#	run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+		#	run_metadata = tf.RunMetadata()
+		#	summary, _ = sess.run([merged, train_step],
+		#					  feed_dict=feed_dict_test(batch),
+		#					  options=run_options,
+		#					  run_metadata=run_metadata)
+		#	test_writer.add_run_metadata(run_metadata, 'step%03d' % i)
+		#	test_writer.add_summary(summary, i)
+		#	print('Adding run metadata for', i)
 		
-		return {x: batch_xs, y: batch_ys, keep_prob: k}
-
-	sess = tf.InteractiveSession()
-
-	for batch in range(test_size):
-		summary, accuracy = sess.run([merged, accuracy], feed_dict= feed_dict(batch))
-		test_writer.add_summary(summary,batch)
 
 	test_writer.close()
+
 
 
 def main(_):
 	if tf.gfile.Exists(FLAGS.log_dir):
 		tf.gfile.DeleteRecursively(FLAGS.log_dir)
 	tf.gfile.MakeDirs(FLAGS.log_dir)
-	[labels, images] = import_images()
-	train(labels,images)
-	test(labels,images)
+	[labels_train, images_train, labels_valid, images_valid] = import_images()
+	train(labels_train,images_train, labels_valid, images_valid)
+	#test(labels_valid,images_valid)
 
 
 if __name__ == '__main__':
