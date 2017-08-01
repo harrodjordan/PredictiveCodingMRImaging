@@ -246,6 +246,7 @@ def train(labels, images, vlabels, vimages):
 				preactivate = tf.nn.depthwise_conv2d(input=input_tensor, filter=weights, 
 													strides=[1,2,2,1], padding='SAME') + biases
 				tf.summary.histogram('pre_activations', preactivate)
+				tf.summary.image('input_times_gradient', input_tensor*(tf.gradient(weights)))
 				feature_map = tf.slice(preactivate,[0,0,0,0],[-1,-1,-1,1])
 				tf.summary.image(layer_name, feature_map,1)
 
