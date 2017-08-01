@@ -20,6 +20,12 @@ from tkinter import *
 from tensorflow.python import debug as tf_debug
 
 
+import random
+
+
+
+
+
 
 
 import argparse
@@ -131,12 +137,12 @@ def import_images():
 
 	for (clean, artif) in zip(clean_imgs, artifact_imgs) :
 		#print(count)
-		if 0 < count <= 12:
+		if 0 < count <= 130:
 			imgs_train.append(clean)
 			imgs_train.append(artif)
 			count = count + 1
 			continue
-		if  13 <= count <= 15:
+		if  131 <= count <= 150:
 			imgs_valid.append(clean)
 			imgs_valid.append(artif)
 			count = count + 1
@@ -149,12 +155,26 @@ def import_images():
 			#continueg
 	
 # labels need to be fixed
-	label_train = np.matrix([1,0]*120)
+	label_train = np.matrix([1,0]*130)
 	label_train = np.repeat(label_train[:, :, np.newaxis], 99, axis=2)
-	label_valid = np.matrix([1,0]*30)
+	label_valid = np.matrix([1,0]*20)
 	label_valid = np.repeat(label_valid[:, :, np.newaxis], 99, axis=2)
 	#label_test = np.matrix([1,0]*3)
 	#label_test = np.repeat(label_test[:, :, np.newaxis], 99, axis=2)
+
+
+
+	c = list(zip(imgs_train, label_train))
+
+	random.shuffle(c)
+
+	imgs_train, labels_train = zip(*c)
+
+	#c = list(zip(imgs_valid, label_valid))
+
+	#random.shuffle(c)
+
+	#imgs_valid, labels_valid = zip(*c)
 
 	return label_train, imgs_train, label_valid, imgs_valid 
 
@@ -235,9 +255,11 @@ def train(labels, images, vlabels, vimages):
 				out_layer = tf.nn.max_pool(preactivate, ksize=ksize, strides=strides, 
                                padding='SAME')
 				tf.summary.histogram('pooling', out_layer)
+				
 		
 			activations = act(out_layer, name='activation')
 			tf.summary.histogram('activations', activations)
+
 			return activations
 
 	n_input = 4
@@ -292,7 +314,7 @@ def train(labels, images, vlabels, vimages):
 		
 		with tf.name_scope('total'):
 			cross_entropy = tf.reduce_mean(diff)
-			print(diff)
+			
 
 	tf.summary.scalar('cross_entropy', cross_entropy)
 	tf.summary.histogram('soft_max',y_)
@@ -307,7 +329,7 @@ def train(labels, images, vlabels, vimages):
 	with tf.name_scope('accuracy'):
 		
 		with tf.name_scope('correct_prediction'):
-			prob_Adjusted = tf.cast(tf.greater(y_, 0.5), tf.float32)
+			prob_Adjusted = tf.cast(tf.greater(y_, 0.3), tf.float32)
 			correct_prediction = tf.equal(y, prob_Adjusted)
 		
 		with tf.name_scope('accuracy'):
@@ -318,9 +340,11 @@ def train(labels, images, vlabels, vimages):
   # Merge all the summaries and write them out to
   # git (by default)
 	merged = tf.summary.merge_all()
-	train_writer = tf.summary.FileWriter(FLAGS.log_dir + '/train', sess.graph)
+	train_writer = tf.summary.FileWriter(FLAGS.log_dir + '/train_bigdata', sess.graph)
 	test_writer = tf.summary.FileWriter(FLAGS.log_dir + '/test')
+	print(FLAGS.log_dir + '/train')
 	tf.global_variables_initializer().run()
+
 
   # Train the model, and also write summaries.
   # Every 10th step, measure test-set accuracy, and write test summaries
@@ -331,7 +355,8 @@ def train(labels, images, vlabels, vimages):
 		#print(np.asarray(imgs_train).shape)
 		batch_xs = np.asarray(images[num][:][:][:])
 		batch_ys = np.asarray(labels[num])
-		k = FLAGS.dropout
+		#k = FLAGS.dropout
+		k = 0.5
 		
 		return {x: batch_xs, y: batch_ys, keep_prob: k}
 
@@ -341,21 +366,29 @@ def train(labels, images, vlabels, vimages):
 		batch_ys = np.asarray(vlabels[num])
 		k = 1.0
 
-	batch_size = 23
-	n_epochs = 200
+	batch_size = 259
+	acc_temp = []
+	n_epochs = 800
 	#print(np.asarray(imgs_train).shape)
 	#print(np.asarray(imgs_valid).shape)
 	#print(np.asarray(imgs_test).shape)
 	for i in range(n_epochs):
+
+		c = list(zip(images, labels))
+
+		random.shuffle(c)
+
+		images, labels = zip(*c)
+
 		for batch in range(batch_size): #range(((np.asarray(images).shape)[0])-1):
 			#print(i)
 			#print(batch)
-			acc_temp = []
-			if i % 50 == 0:  # Record summaries and test-set accuracy
+			
+			if i % 20 == 0:  # Record summaries and test-set accuracy
 				summary, acc = sess.run([merged, accuracy], feed_dict=feed_dict(batch))
 				train_writer.add_summary(summary, i)
 				acc_temp.append(acc)
-				print('Accuracy at step %s: %s' % (i, np.mean(acc_temp)))
+				
 
 			else:  # Record train set summaries, and train
 				if i % 5 == 99:  # Record execution stats
@@ -371,6 +404,10 @@ def train(labels, images, vlabels, vimages):
 				else:  
 					summary, _ = sess.run([merged, train_step], feed_dict=feed_dict(batch))
 					train_writer.add_summary(summary, i)
+		if i % 20 == 0:
+			print('Accuracy at step %s: %s' % (i, np.mean(acc_temp)))
+			acc_temp = []
+
 	train_writer.close()
 
 	#test_size = 5
