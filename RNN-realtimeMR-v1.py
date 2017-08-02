@@ -228,10 +228,14 @@ def train(labels, images, vlabels, vimages):
 
 # Define weights
 	with tf.name_scope('weights'):
-		weights = {'out': tf.Variable(tf.random_normal([n_hidden, n_classes]))}
+		weights = weight_variable([n_hidden, n_classes])
+		variable_summaries(weights)
+		#weights = {'out': tf.Variable(tf.random_normal([n_hidden, n_classes]))}
 
 	with tf.name_scope('biases')
-		biases = {'out': tf.Variable(tf.random_normal([n_classes]))}
+		biases = bias_variable([n_classes])
+		variable_summaries(biases)
+		#biases = {'out': tf.Variable(tf.random_normal([n_classes]))}
 
 
 	def RNN(x, weights, biases):
@@ -241,16 +245,25 @@ def train(labels, images, vlabels, vimages):
 	    # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
 
 	    # Unstack to get a list of 'n_steps' tensors of shape (batch_size, n_input)
-	    x = tf.unstack(x, n_steps, 1)
+	    with tf.name_scope('unstack'):
+	    	x = tf.unstack(x, n_steps, 1)
+	    	tf.summary.scalar('unstack', x)
 
 	    # Define a lstm cell with tensorflow
-	    lstm_cell = tf.nn.rnn_cell(n_hidden, forget_bias=1.0)
+	    with tf.name_scope('RNN_cell')
+	    	lstm_cell = tf.nn.rnn_cell(n_hidden, forget_bias=1.0)
 
 	    # Get lstm cell output
-	    outputs, states = tf.nn.static_rnn(lstm_cell, x, dtype=tf.float32)
+	    with tf.name_scope('static_RNN')
+	    	outputs, states = tf.nn.static_rnn(lstm_cell, x, dtype=tf.float32)
+
+    	with tf.name_scope('output'):
+    		preactivate = tf.matmul(outputs[-1], weights['out']) + biases['out']
+    		tf.summary.histogram('output', preactivate)
+    		#feature map somewhere?
 
 	    # Linear activation, using rnn inner loop last output
-	    return tf.matmul(outputs[-1], weights['out']) + biases['out']
+	    return preactivate
 
 	pred = RNN(x, weights, biases)
 
@@ -266,6 +279,8 @@ def train(labels, images, vlabels, vimages):
 	with tf.name_scope('accuracy'):
 		
 		with tf.name_scope('correct_prediction'):
+			#correct prediction occurs when the next image prediction matches the label
+			#labels need to be updated so that changes in phase result in a change in prediction
 			correct_pred = tf.equal(tf.argmax(pred,1), tf.argmax(y,1))
 
 		with tf.name_scope('accuracy'):
@@ -301,8 +316,7 @@ def train(labels, images, vlabels, vimages):
 		return {x: batch_xs, y: batch_ys}
 
 
-	batch_size = 259
-	acc_temp = []
+	batch_size = 259,
 	n_epochs = 800
 
 	# Launch the graph
