@@ -18,6 +18,7 @@ import tkinter as Tk
 from tkinter import filedialog
 from tkinter import *
 from tensorflow.python import debug as tf_debug
+import rnn-artifacts-v1.py 
 
 
 import random
@@ -34,12 +35,25 @@ FLAGS = None
 
 def import_images():
 
+	# Create artifacts - update paths as needed 
+	#path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train'
+	#path_out= r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
+    path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases'
+    path_out = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases_RNN'
+
+    # Create artifacts 
+	create_artifacts(path, path_out)
+
 	def split_at(s, c, n):
 		words = s.split(c)
 		return c.join(words[:n]), c.join(words[n:])
   # Import data
-	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_clean'
-	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
+  	# Choose whichever directory you plan to use for the training - DCE-50 cases is the smaller data set 
+	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_clean'
+	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
+
+	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases'
+	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases_RNN'
 
 	clean_imgs = []
 	artifact_imgs = []
@@ -122,51 +136,29 @@ def import_images():
 
 	count = 1
 
-#the above variables are lists of 3D matricies 
-#save first 25 to training list
-#next 15 to validation list 
-#last 10 to test list 
+	start_train = 0
+	stop_train = 10
+	stop_valid = 13
 
 	for (clean, artif) in zip(clean_imgs, artifact_imgs) :
 		#print(count)
-		if 0 < count <= 130:
+		if start_train < count <= stop_train:
 			imgs_train.append(clean)
 			imgs_train.append(artif)
 			count = count + 1
 			continue
-		if  131 <= count <= 150:
+		if  (stop_train+1) <= count <= stop_valid:
 			imgs_valid.append(clean)
 			imgs_valid.append(artif)
 			count = count + 1
 			continue
 
-		#if count > 10:
-			#imgs_test.append(clean)
-			#imgs_test.append(artif)
-			#count = count + 1
-			#continueg
 	
-# labels need to be fixed
-	label_train = np.matrix([1,0]*130)
-	label_train = np.repeat(label_train[:, :, np.newaxis], 99, axis=2)
-	label_valid = np.matrix([1,0]*20)
-	label_valid = np.repeat(label_valid[:, :, np.newaxis], 99, axis=2)
-	#label_test = np.matrix([1,0]*3)
-	#label_test = np.repeat(label_test[:, :, np.newaxis], 99, axis=2)
-
-
-
-	c = list(zip(imgs_train, label_train))
-
-	random.shuffle(c)
-
-	imgs_train, labels_train = zip(*c)
-
-	#c = list(zip(imgs_valid, label_valid))
-
-	#random.shuffle(c)
-
-	#imgs_valid, labels_valid = zip(*c)
+# tentative labeling scheme - label images in training by making a one-hot vector? and have it try to fit to the one hot label 
+	label_train = label_valid = np.zeros(99)
+	label_train[0] = label_valid[0] = 1
+	label_train = np.repeat(label_train[:, :, np.newaxis], stop_train, axis=2)
+	label_valid = np.repeat(label_train[:, :, np.newaxis], (stop_train-stop_valid), axis=2)
 
 	return label_train, imgs_train, label_valid, imgs_valid 
 
@@ -305,6 +297,13 @@ def train(labels, images, vlabels, vimages):
 		batch_ys = np.asarray(labels[num])
 		#k = FLAGS.dropout
 
+		c = list(zip(batch_xs, batch_ys))
+
+		random.shuffle(c)
+
+		batch_xs, batch_ys = zip(*c)
+
+	
 		
 		return {x: batch_xs, y: batch_ys}
 
@@ -312,6 +311,12 @@ def train(labels, images, vlabels, vimages):
 
 		batch_xs = np.asarray(vimages)
 		batch_ys = np.asarray(vlabels)
+
+		c = list(zip(batch_xs, batch_ys))
+
+		random.shuffle(c)
+
+		batch_xs, batch_ys = zip(*c)
 
 		return {x: batch_xs, y: batch_ys}
 
