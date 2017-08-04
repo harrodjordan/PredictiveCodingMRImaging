@@ -18,11 +18,11 @@ import random as rand
 
 
 # Creates artifact using images in path, export images to path_out 
-def create_artifacts(path, path_out)
+def create_artifacts(path, path_out):
     
     imgs = []
 
-    path_in = get(path)
+    path_in = path
 
     # Only reading in JPG images for now
     valid_images = [".jpg"]
@@ -108,7 +108,7 @@ def create_artifacts(path, path_out)
 
     #save to a different directory
 
-    file_path = get(path_out)
+    file_path = path_out
 
     assert os.path.isdir(file_path) == False, 'file_path already exists, please choose a different path to avoid overwriting'
 
