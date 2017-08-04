@@ -134,14 +134,14 @@ def import_images():
 
 	imgs_test = []
 
-	count = 1
+	count = 0
 
 	start_train = 0
 	stop_train = 10
 	stop_valid = 13
 
 	for (clean, artif) in zip(clean_imgs, artifact_imgs) :
-		#print(count)
+		
 		if start_train < count <= stop_train:
 			imgs_train.append(clean)
 			imgs_train.append(artif)
@@ -176,20 +176,6 @@ def train(labels, images, vlabels, vimages):
 		words = s.split(c)
 		return c.join(words[:n]), c.join(words[n:])
 
-	sess = tf.InteractiveSession()
-
-
-	learning_rate = 0.001
-	training_iters = 100000
-	batch_size = 128
-	display_step = 10
-
-# Network Parameters
-	n_input = 28 # MNIST data input (img shape: 28*28)
-	n_steps = 28 # timesteps
-	n_hidden = 128 # hidden layer num of features
-	n_classes = 10 # MNIST total classes (0-9 digits)
-
 	def variable_summaries(var):
 		with tf.name_scope('summaries'):
 			mean = tf.reduce_mean(var)
@@ -203,6 +189,19 @@ def train(labels, images, vlabels, vimages):
 		tf.summary.scalar('min', tf.reduce_min(var))
 		tf.summary.histogram('histogram', var)
 
+	sess = tf.InteractiveSession()
+
+	learning_rate = 0.001
+	training_iters = 100000
+	batch_size = 128
+	display_step = 10
+
+# Network Parameters
+	n_input_x = 128 # data input (img shape: 28*28)
+	n_input_y = 256 
+	n_steps = 99 # timesteps
+	n_hidden = n_input_y*n_input_x # hidden layer num of features
+	n_classes = 2 # MNIST total classes (0-9 digits)
 
 # tf Graph input
 	with tf.name_scope('input'):
@@ -213,7 +212,6 @@ def train(labels, images, vlabels, vimages):
 		tf.summary.image('input', ex,1)
 
 	with tf.name_scope('input_reshape'):
-		#x_tensor = tf.reshape(x, [-1, 256, 256, 99]) 
 		x_tensor = x[:,:,:, np.newaxis]
 		x_tensor = tf.transpose(x_tensor, perm = [3,1,2,0])
 		tf.summary.image('input_reshape', x_tensor, 1)
@@ -234,30 +232,31 @@ def train(labels, images, vlabels, vimages):
 
 	    # Prepare data shape to match `rnn` function requirements
 	    # Current data input shape: (batch_size, n_steps, n_input)
-	    # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
+	    # Required shape: 'n_steps' tensors list of shape (batch_size, n_input_x, n_input_y)
 
-	    # Unstack to get a list of 'n_steps' tensors of shape (batch_size, n_input)
+	    # Unstack to get a list of 'n_steps' tensors of shape (batch_size, n_input_x, n_input_y)
 	    with tf.name_scope('unstack'):
 	    	x = tf.unstack(x, n_steps, 1)
 	    	tf.summary.scalar('unstack', x)
-
+	    
+	    for image in x:
 	    # Define a lstm cell with tensorflow
-	    with tf.name_scope('RNN_cell')
-	    	lstm_cell = tf.nn.rnn_cell(n_hidden, forget_bias=1.0)
+	    	with tf.name_scope('RNN_cell')
+	    		lstm_cell = tf.nn.rnn_cell(n_hidden, forget_bias=1.0)
 
 	    # Get lstm cell output
-	    with tf.name_scope('static_RNN')
-	    	outputs, states = tf.nn.static_rnn(lstm_cell, x, dtype=tf.float32)
+	   		with tf.name_scope('static_RNN')
+	    		outputs, states = tf.nn.static_rnn(lstm_cell, image, dtype=tf.float32)
 
-    	with tf.name_scope('output'):
-    		preactivate = tf.matmul(outputs[-1], weights['out']) + biases['out']
-    		tf.summary.histogram('output', preactivate)
+    		with tf.name_scope('output'):
+    			preactivate = tf.matmul(outputs[-1], weights['out']) + biases['out']
+    			tf.summary.histogram('output', preactivate)
     		#feature map somewhere?
 
 	    # Linear activation, using rnn inner loop last output
 	    return preactivate
 
-	pred = RNN(x, weights, biases)
+	pred = RNN(x_tensor, weights, biases)
 
 	# Define loss and optimizer
 	with tf.name_scope('cross-entropy')
@@ -288,22 +287,16 @@ def train(labels, images, vlabels, vimages):
 
 	init =	tf.global_variables_initializer().run()
 
-
-
 	def feed_dict(num):
 
-		#print(np.asarray(imgs_train).shape)
 		batch_xs = np.asarray(images[num][:][:])
 		batch_ys = np.asarray(labels[num])
-		#k = FLAGS.dropout
 
 		c = list(zip(batch_xs, batch_ys))
 
 		random.shuffle(c)
 
 		batch_xs, batch_ys = zip(*c)
-
-	
 		
 		return {x: batch_xs, y: batch_ys}
 
@@ -321,7 +314,7 @@ def train(labels, images, vlabels, vimages):
 		return {x: batch_xs, y: batch_ys}
 
 
-	batch_size = 259,
+	batch_size = 1,
 	n_epochs = 800
 
 	# Launch the graph
