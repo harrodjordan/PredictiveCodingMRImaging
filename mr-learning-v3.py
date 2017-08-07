@@ -73,6 +73,7 @@ def import_images():
 	valid_images = [".jpg"]
 
 	for person in listofnames:
+		
 		for f in os.listdir(path):
 		
 			ext = os.path.splitext(f)[1]

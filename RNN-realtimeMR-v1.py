@@ -269,12 +269,14 @@ def train(labels, images, vlabels, vimages):
 			
 			logits = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
 			
-			
 			probabilities.append(tf.reduce_mean(logits))
 			#print(np.asarray(probabilities).shape)
+
+			#reintroduce pooling 
+			
+			#fully connected layer 
 			
 		return probabilities
-
 
 
 	pred = RNN(x, weights, biases)
