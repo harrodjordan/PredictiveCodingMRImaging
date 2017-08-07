@@ -50,12 +50,13 @@ def import_images():
 	def split_at(s, c, n):
 		words = s.split(c)
 		return c.join(words[:n]), c.join(words[n:])
+  
   # Import data
 	# Choose whichever directory you plan to use for the training - DCE-50 cases is the smaller data set 
 	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_clean'
 	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
 
-	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases'
+	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2517'
 	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases_RNN'
 
 	clean_imgs = []
@@ -82,6 +83,7 @@ def import_images():
 	valid_images = [".jpg"]
 
 	for person in listofnames:
+		
 		for f in os.listdir(path):
 		
 			ext = os.path.splitext(f)[1]
@@ -139,6 +141,7 @@ def import_images():
 
 	count = 0
 
+
 	start_train = 0
 	stop_train = 10
 	stop_valid = 13
@@ -163,9 +166,13 @@ def import_images():
 	label_train = np.repeat(label_train[:, np.newaxis], stop_train, axis=1)
 	label_valid = np.repeat(label_train[:, np.newaxis], (stop_valid-stop_train), axis=1)
 
+	print(imgs_train.shape)
+
 	return label_train, imgs_train, label_valid, imgs_valid 
 
 def train(labels, images, vlabels, vimages):
+
+	sess = tf.InteractiveSession()
 
 	def weight_variable(shape):
 		initial = tf.truncated_normal(shape, stddev=0.1)
@@ -281,7 +288,15 @@ def train(labels, images, vlabels, vimages):
 		optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
 
-
+	with tf.name_scope('accuracy'):
+		
+		with tf.name_scope('correct_prediction'):
+			correct_prediction = tf.equal(tf.argmax(y), tf.argmax(pred))
+		
+		with tf.name_scope('accuracy'):
+			accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
+	
+	tf.summary.scalar('accuracy', accuracy)
 # Evaluate model
 
   # Merge all the summaries and write them out to
@@ -291,10 +306,10 @@ def train(labels, images, vlabels, vimages):
 	test_writer = tf.summary.FileWriter(FLAGS.log_dir + '/rnn_test')
 	print(FLAGS.log_dir + '/train')
 
-	init =	tf.global_variables_initializer().run()
+	tf.global_variables_initializer().run()
 
 	def feed_dict(num):
-
+		print(np.asarray(images).shape)
 		batch_xs = np.asarray(images[num][:][:])
 		batch_ys = np.asarray(labels[num])
 
@@ -306,10 +321,10 @@ def train(labels, images, vlabels, vimages):
 		
 		return {x: batch_xs, y: batch_ys}
 
-	def feed_dict_test():
+	def feed_dict_test(num):
 
-		batch_xs = np.asarray(vimages)
-		batch_ys = np.asarray(vlabels)
+		batch_xs = np.asarray(vimages[num][:][:])
+		batch_ys = np.asarray(vlabels[num])
 
 		c = list(zip(batch_xs, batch_ys))
 
@@ -320,25 +335,28 @@ def train(labels, images, vlabels, vimages):
 		return {x: batch_xs, y: batch_ys}
 
 
-	batch_size = 1,
+	batch_size = 10
+	test_size = 3
 	n_epochs = 800
 
+
 	# Launch the graph
-	with tf.Session() as sess:
-		sess.run(init)
-		step = 1
+	for i in range(n_epochs):
+		step = 0
 		# Keep training until reach max iterations
-		while step * batch_size < training_iters:
+		while step < batch_size:
+			print(step)
 			batch_x, batch_y = feed_dict(step)
-			# Reshape data to get 28 seq of 28 elements
-			batch_x = batch_x.reshape((batch_size, n_steps, n_input))
 			# Run optimization op (backprop)
 			sess.run(optimizer, feed_dict={x: batch_x, y: batch_y})
-			if step % display_step == 0:
+			train_writer.add_summary(summary, i)
+			if step % 5 == 0:
 				# Calculate batch accuracy
 				acc = sess.run(accuracy, feed_dict={x: batch_x, y: batch_y})
 				# Calculate batch loss
 				loss = sess.run(cost, feed_dict={x: batch_x, y: batch_y})
+
+
 				print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
 					  "{:.6f}".format(loss) + ", Training Accuracy= " + \
 					  "{:.5f}".format(acc))
@@ -346,12 +364,13 @@ def train(labels, images, vlabels, vimages):
 		print("Optimization Finished!")
 
 		# Calculate accuracy for 128 mnist test images
-		test_len = 128
-		test_x, test_y = feed_dict()
-		test_data = test_x.reshape((-1, n_steps, n_input))
-		test_label = test_y
-		print("Testing Accuracy:", \
+		while step < test_size:
+			test_x, test_y = feed_dict_test(step)
+			test_data = test_x
+			test_label = test_y
+			print("Testing Accuracy:", \
 			sess.run(accuracy, feed_dict={x: test_data, y: test_label}))
+			test_writer.add_summary(summary, i)
 
 
 
@@ -361,7 +380,6 @@ def main(_):
 	tf.gfile.MakeDirs(FLAGS.log_dir)
 	[labels_train, images_train, labels_valid, images_valid] = import_images()
 	train(labels_train,images_train, labels_valid, images_valid)
-	#test(labels_valid,images_valid)
 
 
 if __name__ == '__main__':
