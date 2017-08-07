@@ -213,9 +213,11 @@ class PredNet(Recurrent):
                 self.conv_layers[c][l].build(in_shape)
                 self.trainable_weights += self.conv_layers[c][l].trainable_weights
 
-#if self.initial_weights is not None:
-# self.set_weights(self.initial_weights)
-# del self.initial_weights
+        self.initial_weights = None
+        
+        if self.initial_weights is not None:
+            self.set_weights(self.initial_weights)
+            del self.initial_weights
 
         self.states = [None] * self.nb_layers*3
 

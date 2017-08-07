@@ -185,6 +185,11 @@ def train(train_images, validate_images):
 def main(_):
 	[images_train, images_valid] = import_images()
 	train(images_train, images_valid)
+	os.system('say "your program has finished"')
+
+
+
+
 
 
 if __name__ == '__main__':
