@@ -1,4 +1,5 @@
 import numpy as np
+import tensorflow as tf 
 
 from keras import backend as K
 from keras import activations
@@ -66,7 +67,7 @@ class PredNet(Recurrent):
                  pixel_max=1., error_activation='relu', A_activation='relu',
                  LSTM_activation='tanh', LSTM_inner_activation='hard_sigmoid',
                  output_mode='error', extrap_start_time = None,
-                 dim_ordering=K.image_dim_ordering(), **kwargs):
+                 **kwargs):
         self.stack_sizes = stack_sizes
         self.nb_layers = len(stack_sizes)
         assert len(R_stack_sizes) == self.nb_layers, 'len(R_stack_sizes) must equal len(stack_sizes)'
@@ -77,6 +78,7 @@ class PredNet(Recurrent):
         self.Ahat_filt_sizes = Ahat_filt_sizes
         assert len(R_filt_sizes) == (self.nb_layers), 'len(R_filt_sizes) must equal len(stack_sizes)'
         self.R_filt_sizes = R_filt_sizes
+        self.units = 1 #might have to update this at a later time 
 
         self.pixel_max = pixel_max
         self.error_activation = activations.get(error_activation)
@@ -96,11 +98,9 @@ class PredNet(Recurrent):
             self.output_layer_num = None
         self.extrap_start_time = extrap_start_time
 
-        assert dim_ordering in {'tf', 'th'}, 'dim_ordering must be in {tf, th}'
-        self.dim_ordering = dim_ordering
-        self.channel_axis = -3 if dim_ordering == 'th' else -1
-        self.row_axis = -2 if dim_ordering == 'th' else -3
-        self.column_axis = -1 if dim_ordering == 'th' else -2
+        self.channel_axis = -1
+        self.row_axis = -3
+        self.column_axis = -2
 
         super(PredNet, self).__init__(**kwargs)
         self.input_spec = [InputSpec(ndim=5)]
@@ -214,7 +214,7 @@ class PredNet(Recurrent):
                 self.trainable_weights += self.conv_layers[c][l].trainable_weights
 
         self.initial_weights = None
-        
+
         if self.initial_weights is not None:
             self.set_weights(self.initial_weights)
             del self.initial_weights
