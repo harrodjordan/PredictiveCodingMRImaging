@@ -4,8 +4,8 @@ import tensorflow as tf
 from keras import backend as K
 from keras import activations
 from keras.layers import Recurrent
-from keras.layers import Convolution2D, UpSampling2D, MaxPooling2D
-from keras.engine import InputSpec
+import tflearn as tflearn
+
 
 
 class PredNet(Recurrent):
@@ -62,12 +62,29 @@ class PredNet(Recurrent):
         - [Convolutional LSTM network: a machine learning approach for precipitation nowcasting](http://arxiv.org/abs/1506.04214)
         - [Predictive coding in the visual cortex: a functional interpretation of some extra-classical receptive-field effects](http://www.nature.com/neuro/journal/v2/n1/pdf/nn0199_79.pdf)
     '''
+    def InputSpec(self, dtype=None,
+                 shape=None,
+                 ndim=None,
+                 max_ndim=None,
+                 min_ndim=None,
+                 axes=None):
+        self.dtype = dtype
+        self.shape = shape
+        if shape is not None:
+            self.ndim = len(shape)
+        else:
+            self.ndim = ndim
+        self.max_ndim = max_ndim
+        self.min_ndim = min_ndim
+        self.axes = axes or {}
+
     def __init__(self, stack_sizes, R_stack_sizes,
                  A_filt_sizes, Ahat_filt_sizes, R_filt_sizes,
                  pixel_max=1., error_activation='relu', A_activation='relu',
                  LSTM_activation='tanh', LSTM_inner_activation='hard_sigmoid',
                  output_mode='error', extrap_start_time = None,
                  **kwargs):
+        
         self.stack_sizes = stack_sizes
         self.nb_layers = len(stack_sizes)
         assert len(R_stack_sizes) == self.nb_layers, 'len(R_stack_sizes) must equal len(stack_sizes)'
@@ -81,10 +98,10 @@ class PredNet(Recurrent):
         self.units = 1 #might have to update this at a later time 
 
         self.pixel_max = pixel_max
-        self.error_activation = activations.get(error_activation)
-        self.A_activation = activations.get(A_activation)
-        self.LSTM_activation = activations.get(LSTM_activation)
-        self.LSTM_inner_activation = activations.get(LSTM_inner_activation)
+        self.error_activation = error_activation
+        self.A_activation = A_activation
+        self.LSTM_activation = LSTM_activation
+        self.LSTM_inner_activation = LSTM_inner_activation
 
         default_output_modes = ['prediction', 'error', 'all']
         layer_output_modes = [layer + str(n) for n in range(self.nb_layers) for layer in ['R', 'E', 'A', 'Ahat']]
@@ -133,11 +150,11 @@ class PredNet(Recurrent):
         init_nb_row = input_shape[self.row_axis]
         init_nb_col = input_shape[self.column_axis]
 
-        base_initial_state = K.zeros_like(x)  # (samples, timesteps) + image_shape
-        non_channel_axis = -1 if self.dim_ordering == 'th' else -2
+        base_initial_state = np.zeros_like(x)  # (samples, timesteps) + image_shape
+        non_channel_axis = -2
         for _ in range(2):
-            base_initial_state = K.sum(base_initial_state, axis=non_channel_axis)
-        base_initial_state = K.sum(base_initial_state, axis=1)  # (samples, nb_channels)
+            base_initial_state = np.sum(base_initial_state, axis=non_channel_axis)
+        base_initial_state = np.sum(base_initial_state, axis=1)  # (samples, nb_channels)
 
         initial_states = []
         states_to_pass = ['r', 'c', 'e']
@@ -158,23 +175,16 @@ class PredNet(Recurrent):
                     stack_size = self.stack_sizes[l]
                 output_size = stack_size * nb_row * nb_col  # flattened size
 
-                reducer = K.zeros((input_shape[self.channel_axis], output_size)) # (nb_channels, output_size)
-                initial_state = K.dot(base_initial_state, reducer) # (samples, output_size)
-                if self.dim_ordering == 'th':
-                    output_shp = (-1, stack_size, nb_row, nb_col)
-                else:
-                    output_shp = (-1, nb_row, nb_col, stack_size)
-                initial_state = K.reshape(initial_state, output_shp)
+                reducer = np.zeros((input_shape[self.channel_axis], output_size)) # (nb_channels, output_size)
+                initial_state = np.dot(base_initial_state, reducer) # (samples, output_size)
+                
+                output_shp = (-1, nb_row, nb_col, stack_size)
+                initial_state = tf.reshape(initial_state, output_shp)
                 initial_states += [initial_state]
 
-        if K._BACKEND == 'theano':
-            from theano import tensor as T
-            # There is a known issue in the Theano scan op when dealing with inputs whose shape is 1 along a dimension.
-            # In our case, this is a problem when training on grayscale images, and the below line fixes it.
-            initial_states = [T.unbroadcast(init_state, 0, 1) for init_state in initial_states]
 
         if self.extrap_start_time is not None:
-            initial_states += [K.variable(0, int)]  # the last state will correspond to the current timestep
+            initial_states += [tf.variable(0, int)]  # the last state will correspond to the current timestep
         return initial_states
 
     def build(self, input_shape):
@@ -183,17 +193,19 @@ class PredNet(Recurrent):
 
         for l in range(self.nb_layers):
             for c in ['i', 'f', 'c', 'o']:
-                act = self.LSTM_activation if c == 'c' else self.LSTM_inner_activation
-                self.conv_layers[c].append(Convolution2D(self.R_stack_sizes[l], self.R_filt_sizes[l], self.R_filt_sizes[l], border_mode='same', activation=act, dim_ordering=self.dim_ordering))
+                if c == 'c':
+                    self.conv_layers[c].append(tf.sigmoid(tf.layers.conv2d(input=self.R_stack_sizes[l], filter=self.R_filt_sizes[l], strides=self.R_filt_sizes[l], padding='SAME')))
+                else:
+                
+                    self.conv_layers[c].append(tf.tanh(tf.layers.conv2d(input=self.R_stack_sizes[l], filter=self.R_filt_sizes[l], strides=self.R_filt_sizes[l], padding='SAME')))
 
-            act = 'relu' if l == 0 else self.A_activation
-            self.conv_layers['ahat'].append(Convolution2D(self.stack_sizes[l], self.Ahat_filt_sizes[l], self.Ahat_filt_sizes[l], border_mode='same', activation=act, dim_ordering=self.dim_ordering))
+            self.conv_layers['ahat'].append(tf.nn.relu(tf.layers.conv2d(input=self.stack_sizes[l], filter=self.Ahat_filt_sizes[l], strides=self.Ahat_filt_sizes[l], padding='SAME')))
 
             if l < self.nb_layers - 1:
-                self.conv_layers['a'].append(Convolution2D(self.stack_sizes[l+1], self.A_filt_sizes[l], self.A_filt_sizes[l], border_mode='same', activation=self.A_activation, dim_ordering=self.dim_ordering))
+                self.conv_layers['a'].append(tf.nn.relu(tf.layers.conv2d(input=self.stack_sizes[l+1], filter=self.A_filt_sizes[l], strides=self.A_filt_sizes[l], padding='SAME')))
 
-        self.upsample = UpSampling2D(dim_ordering=self.dim_ordering)
-        self.pool = MaxPooling2D(dim_ordering=self.dim_ordering)
+        self.upsample = tflearn.layers.upsample_2D(imcoming, newsize, name)
+        self.pool = tf.nn.max_pool()
 
         self.trainable_weights = []
         nb_row, nb_col = (input_shape[-2], input_shape[-1]) if self.dim_ordering == 'th' else (input_shape[-3], input_shape[-2])
@@ -222,7 +234,7 @@ class PredNet(Recurrent):
         self.states = [None] * self.nb_layers*3
 
         if self.extrap_start_time is not None:
-            self.t_extrap = K.variable(self.extrap_start_time, int)
+            self.t_extrap = tf.variable(self.extrap_start_time, int)
 
     def step(self, a, states):
         r_tm1 = states[:self.nb_layers]
@@ -231,7 +243,7 @@ class PredNet(Recurrent):
 
         if self.extrap_start_time is not None:
             t = states[-1]
-            a = K.switch(t >= self.t_extrap, states[-2], a)  # if past self.extrap_start_time, the previous prediction will be treated as the actual
+            a = tf.switch(t >= self.t_extrap, states[-2], a)  # if past self.extrap_start_time, the previous prediction will be treated as the actual
 
         c = []
         r = []
@@ -242,7 +254,7 @@ class PredNet(Recurrent):
             if l < self.nb_layers - 1:
                 inputs.append(r_up)
 
-            inputs = K.concatenate(inputs, axis=self.channel_axis)
+            inputs = tf.concatenate(inputs, axis=self.channel_axis)
             i = self.conv_layers['i'][l].call(inputs)
             f = self.conv_layers['f'][l].call(inputs)
             o = self.conv_layers['o'][l].call(inputs)
@@ -257,7 +269,7 @@ class PredNet(Recurrent):
         for l in range(self.nb_layers):
             ahat = self.conv_layers['ahat'][l].call(r[l])
             if l == 0:
-                ahat = K.minimum(ahat, self.pixel_max)
+                ahat = tf.minimum(ahat, self.pixel_max)
                 frame_prediction = ahat
 
             # compute errors
