@@ -4,7 +4,7 @@ import tensorflow as tf
 from keras import backend as K
 from keras import activations
 from keras.layers import Recurrent
-import tflearn as tflearn
+
 
 
 
@@ -62,21 +62,61 @@ class PredNet(Recurrent):
         - [Convolutional LSTM network: a machine learning approach for precipitation nowcasting](http://arxiv.org/abs/1506.04214)
         - [Predictive coding in the visual cortex: a functional interpretation of some extra-classical receptive-field effects](http://www.nature.com/neuro/journal/v2/n1/pdf/nn0199_79.pdf)
     '''
-    def InputSpec(self, dtype=None,
-                 shape=None,
-                 ndim=None,
-                 max_ndim=None,
-                 min_ndim=None,
-                 axes=None):
-        self.dtype = dtype
-        self.shape = shape
-        if shape is not None:
-            self.ndim = len(shape)
-        else:
-            self.ndim = ndim
-        self.max_ndim = max_ndim
-        self.min_ndim = min_ndim
-        self.axes = axes or {}
+    def upsample_2d(incoming, kernel_size, name="UpSample2D"):
+    #UpSample 2D.
+    #Input:
+       # 4-D Tensor [batch, height, width, in_channels].
+    #Output:
+     #   4-D Tensor [batch, pooled height, pooled width, in_channels].
+    # Arguments:
+    #     incoming: `Tensor`. Incoming 4-D Layer to upsample.
+    #     kernel_size: `int` or `list of int`. Upsampling kernel size.
+    #     name: A name for this layer (optional). Default: 'UpSample2D'.
+    # Attributes:
+    #     scope: `Scope`. This layer scope
+        def get_incoming_shape(incoming):
+        #Returns the incoming data shape 
+            if isinstance(incoming, tf.Tensor):
+                return incoming.get_shape().as_list()
+            elif type(incoming) in [np.array, np.ndarray, list, tuple]:
+                return np.shape(incoming)
+            else:
+                raise Exception("Invalid incoming layer.")
+
+
+        def autoformat_kernel_2d(strides):
+            if isinstance(strides, int):
+                return [1, strides, strides, 1]
+            elif isinstance(strides, (tuple, list, tf.TensorShape)):
+                if len(strides) == 2:
+                    return [1, strides[0], strides[1], 1]
+                elif len(strides) == 4:
+                    return [strides[0], strides[1], strides[2], strides[3]]
+                else:
+                    raise Exception("strides length error: " + str(len(strides))
+                            + ", only a length of 2 or 4 is supported.")
+            else:
+                raise Exception("strides format error: " + str(type(strides)))
+
+        input_shape = utils.get_incoming_shape(incoming)
+        assert len(input_shape) == 4, "Incoming Tensor shape must be 4-D"
+        kernel = utils.autoformat_kernel_2d(kernel_size)
+
+        with tf.name_scope(name) as scope:
+            inference = tf.image.resize_nearest_neighbor(
+                incoming, size=input_shape[1:3] * tf.constant(kernel[1:3]))
+            inference.set_shape((None, input_shape[1] * kernel[1],
+                            input_shape[2] * kernel[2], None))
+
+    # Add attributes to Tensor to easy access weights
+        inference.scope = scope
+
+    # Track output tensor.
+        tf.add_to_collection(tf.GraphKeys.LAYER_TENSOR + '/' + name, inference)
+
+        return inference
+
+
 
     def __init__(self, stack_sizes, R_stack_sizes,
                  A_filt_sizes, Ahat_filt_sizes, R_filt_sizes,
@@ -84,6 +124,20 @@ class PredNet(Recurrent):
                  LSTM_activation='tanh', LSTM_inner_activation='hard_sigmoid',
                  output_mode='error', extrap_start_time = None,
                  **kwargs):
+
+        def InputSpec(self, dtype=None, shape=None, ndim=None, max_ndim=None, min_ndim=None, axes=None):
+        
+            #self.dtype = dtype
+            #self.shape = shape
+
+            #if shape is not None:
+                #self.ndim = len(shape)
+            #else:
+                ndim = ndim
+            #
+            #self.max_ndim = max_ndim
+            #self.min_ndim = min_ndim
+            #self.axes = axes or {}
         
         self.stack_sizes = stack_sizes
         self.nb_layers = len(stack_sizes)
@@ -120,7 +174,7 @@ class PredNet(Recurrent):
         self.column_axis = -2
 
         super(PredNet, self).__init__(**kwargs)
-        self.input_spec = [InputSpec(ndim=5)]
+        self.input_spec = [InputSpec(self.input_spec, ndim=5)]
 
     def get_output_shape_for(self, input_shape):
         if self.output_mode == 'prediction':
@@ -188,7 +242,7 @@ class PredNet(Recurrent):
         return initial_states
 
     def build(self, input_shape):
-        self.input_spec = [InputSpec(shape=input_shape)]
+        self.input_spec = [InputSpec(self.input_spec, shape=input_shape)]
         self.conv_layers = {c: [] for c in ['i', 'f', 'c', 'o', 'a', 'ahat']}
 
         for l in range(self.nb_layers):
@@ -204,7 +258,7 @@ class PredNet(Recurrent):
             if l < self.nb_layers - 1:
                 self.conv_layers['a'].append(tf.nn.relu(tf.layers.conv2d(input=self.stack_sizes[l+1], filter=self.A_filt_sizes[l], strides=self.A_filt_sizes[l], padding='SAME')))
 
-        self.upsample = tflearn.layers.upsample_2D(imcoming, newsize, name)
+        self.upsample = upsample_2D(imcoming, newsize, name)
         self.pool = tf.nn.max_pool()
 
         self.trainable_weights = []

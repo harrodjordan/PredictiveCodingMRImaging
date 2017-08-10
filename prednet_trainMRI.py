@@ -7,7 +7,7 @@ from __future__ import print_function
 from six.moves import cPickle
 from data_utils import SequenceGenerator
 
-import prednet_mod as PredNet
+import prednet_modTF as PredNet
 import numpy as np
 import random
 import tensorflow as tf
@@ -37,6 +37,20 @@ import sys
 
 FLAGS = None
 np.random.seed(123)
+
+def InputSpec(self, dtype=None, shape=None, ndim=None, max_ndim=None, min_ndim=None, axes=None):
+        
+            #self.dtype = dtype
+            #self.shape = shape
+
+            #if shape is not None:
+                #self.ndim = len(shape)
+            #else:
+                ndim = ndim
+            #
+            #self.max_ndim = max_ndim
+            #self.min_ndim = min_ndim
+            #self.axes = axes or {}
 
 
 def import_images():
@@ -157,7 +171,7 @@ def train(train_images, validate_images):
 	                  A_filt_sizes, Ahat_filt_sizes, R_filt_sizes,
 	                  output_mode='error', return_sequences=True)
 
-	inputs = Input(shape=(nt,) + input_shape)
+	inputs = tf.placeholder(tf.float32, [nt, n_channels, im_height, im_width])
 	print(np.linalg.matrix_rank(inputs))
 	errors = prednet(inputs)  # errors will be (batch_size, nt, nb_layers)
 	errors_by_time = TimeDistributed(Dense(1, weights=[layer_loss_weights, np.zeros(1)], trainable=False), trainable=False)(errors)  # calculate weighted error by layer
