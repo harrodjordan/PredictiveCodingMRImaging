@@ -155,12 +155,12 @@ def train(train_images, validate_images):
 	# Model parameters
 	nt = 18
 	n_channels, im_height, im_width = (192, 180, 80)
-	input_shape = (im_height, im_width, n_channels)
-	stack_sizes = (n_channels, 48, 96, 192)
+	input_shape = np.zeros([im_height, im_width, n_channels])
+	stack_sizes = np.zeros([n_channels, 48, 96, 192])
 	R_stack_sizes = stack_sizes
-	A_filt_sizes = (3, 3, 3)
-	Ahat_filt_sizes = (3, 3, 3, 3)
-	R_filt_sizes = (3, 3, 3, 3)
+	A_filt_sizes = np.zeros([3, 3, 3])
+	Ahat_filt_sizes = np.zeros([3, 3, 3, 3])
+	R_filt_sizes = np.zeros([3, 3, 3, 3])
 	layer_loss_weights = np.array([1., 0., 0., 0.])
 	layer_loss_weights = np.expand_dims(layer_loss_weights, 1)
 	time_loss_weights = 1./ (nt - 1) * np.ones((nt,1))

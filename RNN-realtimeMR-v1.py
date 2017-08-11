@@ -139,7 +139,7 @@ def import_images():
 
 	imgs_test = []
 
-	count = 0
+	count = 1
 
 
 	start_train = 0
@@ -147,30 +147,22 @@ def import_images():
 	stop_valid = 13
 
 	for (clean, artif) in zip(clean_imgs, artifact_imgs) :
-		
+		print(count)
 		if start_train < count <= stop_train:
 			imgs_train.append(clean)
-			imgs_train.append(artif)
+			#imgs_train.append(artif)
 			count = count + 1
 			continue
 		if  (stop_train+1) <= count <= stop_valid:
 			imgs_valid.append(clean)
-			imgs_valid.append(artif)
+			#imgs_valid.append(artif)
 			count = count + 1
 			continue
 
-	
-# tentative labeling scheme - label images in training by making a one-hot vector? and have it try to fit to the one hot label 
-	label_train = label_valid = np.zeros(99)
-	label_train[0] = label_valid[0] = 1
-	label_train = np.repeat(label_train[:, np.newaxis], stop_train, axis=1)
-	label_valid = np.repeat(label_train[:, np.newaxis], (stop_valid-stop_train), axis=1)
 
-	print(imgs_train.shape)
+	return imgs_train, imgs_valid 
 
-	return label_train, imgs_train, label_valid, imgs_valid 
-
-def train(labels, images, vlabels, vimages):
+def train(images, vimages):
 
 	sess = tf.InteractiveSession()
 
@@ -202,7 +194,7 @@ def train(labels, images, vlabels, vimages):
 	sess = tf.InteractiveSession()
 
 	learning_rate = 0.001
-	training_iters = 100000
+	training_iters = 1000
 	batch_size = 256
 	display_step = 10
 
@@ -216,7 +208,6 @@ def train(labels, images, vlabels, vimages):
 # tf Graph input
 	with tf.name_scope('input'):
 		x = tf.placeholder(tf.float32, [99, 256, 128])
-		y = tf.placeholder(tf.float32, [99]) 
 		ex = tf.slice(x,[0,0,0],[1,-1,-1])
 		ex = x[:,:,:, np.newaxis]
 		tf.summary.image('input', ex,1)
@@ -238,67 +229,92 @@ def train(labels, images, vlabels, vimages):
 		#biases = {'out': tf.Variable(tf.random_normal([n_classes]))}
 
 
-	def RNN(x, weights, biases):
+	#def RNN(x, weights, biases):
 
 		# Prepare data shape to match `rnn` function requirements
 		# Current data input shape: (batch_size, n_steps, n_input)
 		# Required shape: 'n_steps' tensors list of shape (batch_size, n_input_x, n_input_y)
 
 		# Unstack to get a list of 'n_steps' tensors of shape (batch_size, n_input_x, n_input_y)
-		with tf.name_scope('unstack'):
-			x = tf.unstack(x, 99, 0)
-			tf.summary.scalar('unstack', x)
+	with tf.name_scope('unstack'):
+		x = tf.unstack(x, 99, 0)
+		tf.summary.scalar('unstack', x)
 
-		# Define a lstm cell with tensorflow
-		with tf.name_scope('LSTM_cell'):
-			lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden, 
-						forget_bias=1.0, state_is_tuple=False)
+	# Define a lstm cell with tensorflow
+	with tf.name_scope('LSTM_cell'):
+		lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden, 
+					forget_bias=1.0, state_is_tuple=False)
 
-		state = tf.zeros([batch_size, lstm_cell.state_size])
-
-
-		probabilities = []
-
-		# Get lstm cell output
-		with tf.name_scope('static_RNN'):
-			output, state = tf.contrib.rnn.static_rnn(lstm_cell, x, initial_state=state)
-
-		for image in output:
-
-			image = image[:,:,np.newaxis,np.newaxis]
-			
-			logits = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
-			
-			probabilities.append(tf.reduce_mean(logits))
-			#print(np.asarray(probabilities).shape)
-
-			#reintroduce pooling 
-			
-			#fully connected layer 
-			
-		return probabilities
+	state = tf.zeros([batch_size, lstm_cell.state_size])
 
 
-	pred = RNN(x, weights, biases)
+	loss = []
 
-	with tf.name_scope('cross-entropy'):
-				cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, 
-					labels=y))
+	# Get lstm cell output
+	with tf.name_scope('static_RNN'):
+		output, state = tf.contrib.rnn.static_rnn(lstm_cell, x, initial_state=state)
 
-	# Define loss and optimizer
-	with tf.name_scope('train'):
-		optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+	last_image = np.zeros([256,128], dtype=np.float32)
+	last_image = last_image[:,:,np.newaxis,np.newaxis]
 
+	for image in output:
 
-	with tf.name_scope('accuracy'):
+		image = image[:,:,np.newaxis,np.newaxis]
 		
-		with tf.name_scope('correct_prediction'):
-			correct_prediction = tf.equal(tf.argmax(y), tf.argmax(pred))
-		
+		logits_last = tf.nn.conv2d(input =last_image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+
+		logits_curr = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+
+		if np.array(logits_last).shape != np.array(logits_last).shape:
+			with tf.name_scope('pool'):
+				ksize = [1, 1]
+				strides = [2, 1]
+				out_layer = tf.nn.max_pool(logits_curr, ksize=ksize, strides=strides, 
+                           padding='SAME')
+
+		with tf.name_scope('cross-entropy'):
+			cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits_last, 
+				labels=logits_curr))
+
+			loss.append(cost)
+
+
 		with tf.name_scope('accuracy'):
-			accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 	
-	tf.summary.scalar('accuracy', accuracy)
+			with tf.name_scope('correct_prediction'):
+				correct_prediction = tf.equal(logits_last, logits_curr)
+	
+			with tf.name_scope('accuracy'):
+				accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
+
+				tf.summary.scalar('accuracy', accuracy)
+
+		last_image = image
+
+		with tf.name_scope('train'):
+				optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+
+		# Define loss and optimizer
+		
+
+			
+			
+
+			
+		#return loss, accuracy
+
+	#[loss, accuracy] = RNN(x, weights, biases)
+
+
+
+	
+
+
+
+	
+
+
+	
 # Evaluate model
 
   # Merge all the summaries and write them out to
@@ -313,28 +329,26 @@ def train(labels, images, vlabels, vimages):
 	def feed_dict(num):
 		print(np.asarray(images).shape)
 		batch_xs = np.asarray(images[num][:][:])
-		batch_ys = np.asarray(labels[num])
 
-		c = list(zip(batch_xs, batch_ys))
+		c = list(batch_xs)
 
 		random.shuffle(c)
 
-		batch_xs, batch_ys = zip(*c)
-		
-		return {x: batch_xs, y: batch_ys}
+		batch_xs = zip(*c)
+
+		return {x: batch_xs}
 
 	def feed_dict_test(num):
 
 		batch_xs = np.asarray(vimages[num][:][:])
-		batch_ys = np.asarray(vlabels[num])
 
-		c = list(zip(batch_xs, batch_ys))
+		c = list(batch_xs)
 
 		random.shuffle(c)
 
-		batch_xs, batch_ys = zip(*c)
+		batch_xs = zip(*c)
 
-		return {x: batch_xs, y: batch_ys}
+		return {x: batch_xs}
 
 
 	batch_size = 10
@@ -348,15 +362,15 @@ def train(labels, images, vlabels, vimages):
 		# Keep training until reach max iterations
 		while step < batch_size:
 			print(step)
-			batch_x, batch_y = feed_dict(step)
+			batch_x= feed_dict(step)
 			# Run optimization op (backprop)
-			sess.run(optimizer, feed_dict={x: batch_x, y: batch_y})
+			sess.run(optimizer, feed_dict={x: batch_x})
 			train_writer.add_summary(summary, i)
 			if step % 5 == 0:
 				# Calculate batch accuracy
-				acc = sess.run(accuracy, feed_dict={x: batch_x, y: batch_y})
+				acc = sess.run(accuracy, feed_dict={x: batch_x})
 				# Calculate batch loss
-				loss = sess.run(cost, feed_dict={x: batch_x, y: batch_y})
+				loss = sess.run(cost, feed_dict={x: batch_x})
 
 
 				print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
@@ -367,11 +381,10 @@ def train(labels, images, vlabels, vimages):
 
 		# Calculate accuracy for 128 mnist test images
 		while step < test_size:
-			test_x, test_y = feed_dict_test(step)
+			test_x = feed_dict_test(step)
 			test_data = test_x
-			test_label = test_y
 			print("Testing Accuracy:", \
-			sess.run(accuracy, feed_dict={x: test_data, y: test_label}))
+			sess.run(accuracy, feed_dict={x: test_data}))
 			test_writer.add_summary(summary, i)
 
 
@@ -380,8 +393,8 @@ def main(_):
 	if tf.gfile.Exists(FLAGS.log_dir):
 		tf.gfile.DeleteRecursively(FLAGS.log_dir)
 	tf.gfile.MakeDirs(FLAGS.log_dir)
-	[labels_train, images_train, labels_valid, images_valid] = import_images()
-	train(labels_train,images_train, labels_valid, images_valid)
+	[images_train, images_valid] = import_images()
+	train(images_train, images_valid)
 
 
 if __name__ == '__main__':

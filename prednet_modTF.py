@@ -127,17 +127,17 @@ class PredNet(Recurrent):
 
         def InputSpec(self, dtype=None, shape=None, ndim=None, max_ndim=None, min_ndim=None, axes=None):
         
-            #self.dtype = dtype
-            #self.shape = shape
+            self.dtype = dtype
+            self.shape = shape
 
-            #if shape is not None:
-                #self.ndim = len(shape)
-            #else:
-                ndim = ndim
-            #
-            #self.max_ndim = max_ndim
-            #self.min_ndim = min_ndim
-            #self.axes = axes or {}
+            if shape is not None:
+                self.ndim = len(shape)
+            else:
+                self.ndim = ndim
+            
+            self.max_ndim = max_ndim
+            self.min_ndim = min_ndim
+            self.axes = axes or {}
         
         self.stack_sizes = stack_sizes
         self.nb_layers = len(stack_sizes)
@@ -200,6 +200,20 @@ class PredNet(Recurrent):
             return (input_shape[0],) + out_shape
 
     def get_initial_states(self, x):
+        def InputSpec(self, dtype=None, shape=None, ndim=None, max_ndim=None, min_ndim=None, axes=None):
+        
+            self.dtype = dtype
+            self.shape = shape
+
+            if shape is not None:
+                self.ndim = len(shape)
+            else:
+                self.ndim = ndim
+            
+            self.max_ndim = max_ndim
+            self.min_ndim = min_ndim
+            self.axes = axes or {}
+        
         input_shape = self.input_spec[0].shape
         init_nb_row = input_shape[self.row_axis]
         init_nb_col = input_shape[self.column_axis]
@@ -242,21 +256,35 @@ class PredNet(Recurrent):
         return initial_states
 
     def build(self, input_shape):
+        def InputSpec(self, dtype=None, shape=None, ndim=None, max_ndim=None, min_ndim=None, axes=None):
+        
+            self.dtype = dtype
+            self.shape = shape
+
+            if shape is not None:
+                self.ndim = len(shape)
+            else:
+                self.ndim = ndim
+            
+            self.max_ndim = max_ndim
+            self.min_ndim = min_ndim
+            self.axes = axes or {}
+
         self.input_spec = [InputSpec(self.input_spec, shape=input_shape)]
         self.conv_layers = {c: [] for c in ['i', 'f', 'c', 'o', 'a', 'ahat']}
 
         for l in range(self.nb_layers):
             for c in ['i', 'f', 'c', 'o']:
                 if c == 'c':
-                    self.conv_layers[c].append(tf.sigmoid(tf.layers.conv2d(input=self.R_stack_sizes[l], filter=self.R_filt_sizes[l], strides=self.R_filt_sizes[l], padding='SAME')))
+                    self.conv_layers[c].append(tf.sigmoid(tf.layers.conv2d(self.R_stack_sizes[l], self.R_filt_sizes[l], self.R_filt_sizes[l], [1,1], 'SAME')))
                 else:
                 
-                    self.conv_layers[c].append(tf.tanh(tf.layers.conv2d(input=self.R_stack_sizes[l], filter=self.R_filt_sizes[l], strides=self.R_filt_sizes[l], padding='SAME')))
+                    self.conv_layers[c].append(tf.tanh(tf.layers.conv2d(self.R_stack_sizes[l], self.R_filt_sizes[l], self.R_filt_sizes[l], [1,1], 'SAME')))
 
-            self.conv_layers['ahat'].append(tf.nn.relu(tf.layers.conv2d(input=self.stack_sizes[l], filter=self.Ahat_filt_sizes[l], strides=self.Ahat_filt_sizes[l], padding='SAME')))
+            self.conv_layers['ahat'].append(tf.nn.relu(tf.layers.conv2d(self.stack_sizes[l], self.Ahat_filt_sizes[l], self.Ahat_filt_sizes[l], [1,1], 'SAME')))
 
             if l < self.nb_layers - 1:
-                self.conv_layers['a'].append(tf.nn.relu(tf.layers.conv2d(input=self.stack_sizes[l+1], filter=self.A_filt_sizes[l], strides=self.A_filt_sizes[l], padding='SAME')))
+                self.conv_layers['a'].append(tf.nn.relu(tf.layers.conv2d(self.stack_sizes[l+1], self.A_filt_sizes[l], self.A_filt_sizes[l], [1,1], 'SAME')))
 
         self.upsample = upsample_2D(imcoming, newsize, name)
         self.pool = tf.nn.max_pool()
