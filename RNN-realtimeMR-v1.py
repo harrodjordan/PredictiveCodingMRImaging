@@ -240,41 +240,64 @@ def train(images, vimages):
 		x = tf.unstack(x, 99, 0)
 		tf.summary.scalar('unstack', x)
 
-	# Define a lstm cell with tensorflow
-	with tf.name_scope('LSTM_cell'):
-		lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden, 
-					forget_bias=1.0, state_is_tuple=False)
+	count = 1
 
-	state = tf.zeros([batch_size, lstm_cell.state_size])
-
-
-	loss = []
-
-	# Get lstm cell output
-	with tf.name_scope('static_RNN'):
-		output, state = tf.contrib.rnn.static_rnn(lstm_cell, x, initial_state=state)
-
-	last_image = np.zeros([256,128], dtype=np.float32)
-	last_image = last_image[:,:,np.newaxis,np.newaxis]
-
-	for image in output:
+	for image in x:
 
 		image = image[:,:,np.newaxis,np.newaxis]
+
+		if count < 6:
 		
-		logits_last = tf.nn.conv2d(input =last_image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+			image  = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
 
-		logits_curr = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+			new_x1 = tf.stack([new_x1, image])
 
-		if np.array(logits_last).shape != np.array(logits_last).shape:
-			with tf.name_scope('pool'):
-				ksize = [1, 1]
-				strides = [2, 1]
-				out_layer = tf.nn.max_pool(logits_curr, ksize=ksize, strides=strides, 
-                           padding='SAME')
+			continue
+
+		if count < 12:
+		
+			image = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+
+			new_x2 = tf.stack([new_x2, image])
+
+			continue
+
+		if count < 18:
+
+			image = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+
+			new_x3 = tf.stack([new_x3, image])
+
+			continue
+
+		if count == 6 || count == 12 || count == 18:
+			new_x4 = tf.stack([new_x4, image])
+
+	for x in tf.stack([new_x1, new_x2, new_x3])
+
+		with tf.name_scope('unstack'):
+			new_x = tf.unstack(new_x, 99, 0)
+			tf.summary.scalar('unstack', x)
+
+		# Define a lstm cell with tensorflow
+		with tf.name_scope('LSTM_cell'):
+			lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden, 
+						forget_bias=1.0, state_is_tuple=False)
+
+		state = tf.zeros([batch_size, lstm_cell.state_size])
+
+
+		# Get lstm cell output
+		with tf.name_scope('static_RNN'):
+
+			output, state = tf.contrib.rnn.static_rnn(lstm_cell, x, initial_state=state)
+
+
+		#upsample the output 
 
 		with tf.name_scope('cross-entropy'):
-			cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits_last, 
-				labels=logits_curr))
+			cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, 
+					labels=logits_curr))
 
 			loss.append(cost)
 
@@ -294,15 +317,6 @@ def train(images, vimages):
 		with tf.name_scope('train'):
 				optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
-		# Define loss and optimizer
-		
-
-			
-			
-
-			
-		#return loss, accuracy
-
 	#[loss, accuracy] = RNN(x, weights, biases)
 
 
@@ -320,14 +334,14 @@ def train(images, vimages):
   # Merge all the summaries and write them out to
   # git (by default)
 	merged = tf.summary.merge_all()
-	train_writer = tf.summary.FileWriter(FLAGS.log_dir + '/rnn_train', sess.graph)
+ 	train_writer = tf.summary.FileWriter(FLAGS.log_dir + '/rnn_train', sess.graph)
 	test_writer = tf.summary.FileWriter(FLAGS.log_dir + '/rnn_test')
 	print(FLAGS.log_dir + '/train')
 
 	tf.global_variables_initializer().run()
 
 	def feed_dict(num):
-		print(np.asarray(images).shape)
+
 		batch_xs = np.asarray(images[num][:][:])
 
 		c = list(batch_xs)
@@ -336,7 +350,7 @@ def train(images, vimages):
 
 		batch_xs = zip(*c)
 
-		return {x: batch_xs}
+		return batch_xs
 
 	def feed_dict_test(num):
 
@@ -347,8 +361,8 @@ def train(images, vimages):
 		random.shuffle(c)
 
 		batch_xs = zip(*c)
-
-		return {x: batch_xs}
+        
+		return batch_xs   
 
 
 	batch_size = 10
@@ -358,30 +372,27 @@ def train(images, vimages):
 
 	# Launch the graph
 	for i in range(n_epochs):
-		step = 0
 		# Keep training until reach max iterations
-		while step < batch_size:
-			print(step)
-			batch_x= feed_dict(step)
+		for batch in range(batch_size):
+			batch_x= feed_dict(batch)
 			# Run optimization op (backprop)
 			sess.run(optimizer, feed_dict={x: batch_x})
 			train_writer.add_summary(summary, i)
-			if step % 5 == 0:
+			if i % 5 == 0:
 				# Calculate batch accuracy
 				acc = sess.run(accuracy, feed_dict={x: batch_x})
 				# Calculate batch loss
 				loss = sess.run(cost, feed_dict={x: batch_x})
 
 
-				print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
+				print("Iter " + str(batch*batch_size) + ", Minibatch Loss= " + \
 					  "{:.6f}".format(loss) + ", Training Accuracy= " + \
 					  "{:.5f}".format(acc))
-			step += 1
 		print("Optimization Finished!")
 
 		# Calculate accuracy for 128 mnist test images
 		while step < test_size:
-			test_x = feed_dict_test(step)
+			test_x = feed_dict_test(batch)
 			test_data = test_x
 			print("Testing Accuracy:", \
 			sess.run(accuracy, feed_dict={x: test_data}))
