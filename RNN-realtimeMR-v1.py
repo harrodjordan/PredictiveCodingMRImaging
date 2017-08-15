@@ -245,7 +245,7 @@ def train(images, vimages):
 
 		# Unstack to get a list of 'n_steps' tensors of shape (batch_size, n_input_x, n_input_y)
 
-	def layers(x, last_error, name)
+	def layers(x, last_error, name):
 
 		with tf.name_scope(name):
 
@@ -256,6 +256,11 @@ def train(images, vimages):
 				tf.summary.scalar('unstack', x)
 
 			count = 1
+			loop = 0
+			new_x1 = np.zeros([256,64,1,1])
+			new_x2 = np.zeros([256,64,1,1])
+			new_x3 = np.zeros([256,64,1,1])
+			new_x4 = np.zeros([256,64,1,1])
 
 			for image in x:
 
@@ -263,30 +268,53 @@ def train(images, vimages):
 
 				if count < 6:
 				
-					image  = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+					image  = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
+
+					if loop != 0 :
+
+						image = image[np.newaxis, :,:,:,:]
 
 					new_x1 = tf.stack([new_x1, image])
+
+					loop = loop + 1
 
 					continue
 
 				if count < 12:
 				
-					image = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+					image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
+
+					if loop != 0 :
+
+						image = image[np.newaxis, :,:,:,:]
 
 					new_x2 = tf.stack([new_x2, image])
+					loop = loop + 1
 
 					continue
 
 				if count < 18:
 
-					image = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+					image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
+
+					if loop != 0 :
+
+						image = image[np.newaxis, :,:,:,:]
 
 					new_x3 = tf.stack([new_x3, image])
+					loop = loop + 1
 
 					continue
 
-				if count == 6 || count == 12 || count == 18:
+				if count == 6 or count == 12 or count == 18:
+
+					if loop != 0 :
+
+						image = image[np.newaxis, :,:,:,:]
+
 					new_x4 = tf.stack([new_x4, image])
+					loop = loop + 1
+					continue 
 
 			new_x4 = tf.unstack(new_x4, 3, 0)
 
@@ -319,7 +347,7 @@ def train(images, vimages):
 
 
 					with tf.name_scope('deconv') as scope:
-    					upsampled = tf.nn.conv2d_transpose(feat_proj, [1, 1, 1, 1], [1, 26, 20, 1], [1, 2, 2, 1], padding='SAME', name=None)
+						upsampled = tf.nn.conv2d_transpose(feat_proj, [1, 1, 1, 1], [1, 26, 20, 1], [1, 2, 2, 1], padding='SAME', name=None)
 
 					with tf.name_scope('cross-entropy'):
 						cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=feat_proj, 
@@ -353,15 +381,13 @@ def train(images, vimages):
 			optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
 	#[loss, accuracy] = RNN(x, weights, biases)
-
-
 	
 # Evaluate model
 
   # Merge all the summaries and write them out to
   # git (by default)
 	merged = tf.summary.merge_all()
- 	train_writer = tf.summary.FileWriter(FLAGS.log_dir + '/rnn_train', sess.graph)
+	train_writer = tf.summary.FileWriter(FLAGS.log_dir + '/rnn_train', sess.graph)
 	test_writer = tf.summary.FileWriter(FLAGS.log_dir + '/rnn_test')
 	print(FLAGS.log_dir + '/train')
 
@@ -388,7 +414,7 @@ def train(images, vimages):
 		random.shuffle(c)
 
 		batch_xs = zip(*c)
-        
+		
 		return batch_xs   
 
 
