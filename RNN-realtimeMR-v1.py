@@ -223,10 +223,18 @@ def train(images, vimages):
 		variable_summaries(weights)
 		#weights = {'out': tf.Variable(tf.rxandom_normal([n_hidden, n_classes]))}
 
+	with tf.name_scope('proj_weights'):
+		proj_weights = weight_variable([n_hidden, n_classes, 1, 1])
+		variable_summaries(weights)
+
 	with tf.name_scope('biases'):
 		biases = bias_variable([n_classes])
 		variable_summaries(biases)
 		#biases = {'out': tf.Variable(tf.random_normal([n_classes]))}
+
+	with tf.name_scope('proj_biases'):
+		proj_biases = bias_variable([n_classes])
+		variable_summaries(biases)
 
 
 	#def RNN(x, weights, biases):
@@ -236,96 +244,115 @@ def train(images, vimages):
 		# Required shape: 'n_steps' tensors list of shape (batch_size, n_input_x, n_input_y)
 
 		# Unstack to get a list of 'n_steps' tensors of shape (batch_size, n_input_x, n_input_y)
-	with tf.name_scope('unstack'):
-		x = tf.unstack(x, 99, 0)
-		tf.summary.scalar('unstack', x)
 
-	count = 1
+	def layers(x, last_error, name)
 
-	for image in x:
+		with tf.name_scope(name):
 
-		image = image[:,:,np.newaxis,np.newaxis]
+			loss = last_error;
 
-		if count < 6:
+			with tf.name_scope('unstack'):
+				x = tf.unstack(x, 99, 0)
+				tf.summary.scalar('unstack', x)
+
+			count = 1
+
+			for image in x:
+
+				image = image[:,:,np.newaxis,np.newaxis]
+
+				if count < 6:
+				
+					image  = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+
+					new_x1 = tf.stack([new_x1, image])
+
+					continue
+
+				if count < 12:
+				
+					image = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+
+					new_x2 = tf.stack([new_x2, image])
+
+					continue
+
+				if count < 18:
+
+					image = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+
+					new_x3 = tf.stack([new_x3, image])
+
+					continue
+
+				if count == 6 || count == 12 || count == 18:
+					new_x4 = tf.stack([new_x4, image])
+
+			new_x4 = tf.unstack(new_x4, 3, 0)
+
+			for x in tf.stack([new_x1, new_x2, new_x3]):
+
+				x = tf.unstack(x,5,0)
+
+				for time in x:
+
+					with tf.name_scope('unstack'):
+						new_x = tf.unstack(time, 99, 0)
+						tf.summary.scalar('unstack', x)
+
+					# Define a lstm cell with tensorflow
+					with tf.name_scope('LSTM_cell'):
+						lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden, 
+									forget_bias=0.5, state_is_tuple=False)
+
+					state = tf.zeros([batch_size, lstm_cell.state_size])
+
+
+					# Get lstm cell output
+					with tf.name_scope('static_RNN'):
+
+						output, state = tf.contrib.rnn.static_rnn(lstm_cell, x, initial_state=state)
+
+					feat_real = tf.nn.conv2d(input = new_x4[count], filter = proj_weights, strides = [1,1,1,1], padding = 'SAME') + proj_biases
+
+					feat_proj = tf.nn.conv2d(input = output, filter = proj_weights, strides = [1,1,1,1], padding = 'SAME') + proj_biases
+
+
+					with tf.name_scope('deconv') as scope:
+    					upsampled = tf.nn.conv2d_transpose(feat_proj, [1, 1, 1, 1], [1, 26, 20, 1], [1, 2, 2, 1], padding='SAME', name=None)
+
+					with tf.name_scope('cross-entropy'):
+						cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=feat_proj, 
+								labels=feat_real))
+
+						loss.append(cost)
+
+					error = cost
+
+
+					with tf.name_scope('accuracy'):
+				
+						with tf.name_scope('correct_prediction'):
+							correct_prediction = tf.equal(logits_last, logits_curr)
+				
+						with tf.name_scope('accuracy'):
+							accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
+
+							tf.summary.scalar('accuracy', accuracy)
+
+					count = count + 1
 		
-			image  = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
+		return loss, upsampled, feat_proj
 
-			new_x1 = tf.stack([new_x1, image])
+	[loss, upsampled, features] = layers(x, 0, 'layer1')
+	[loss, upsampled, features] = layers(upsampled, loss, 'layer2')
+	[loss, upsampled, features] = layers(upsampled, loss, 'layer3')
+	[loss, upsampled, features] = layers(upsampled, loss, 'layer4')
 
-			continue
-
-		if count < 12:
-		
-			image = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
-
-			new_x2 = tf.stack([new_x2, image])
-
-			continue
-
-		if count < 18:
-
-			image = tf.nn.conv2d(input =image, filter=weights, strides=[1,2,2,1], padding='SAME') + biases
-
-			new_x3 = tf.stack([new_x3, image])
-
-			continue
-
-		if count == 6 || count == 12 || count == 18:
-			new_x4 = tf.stack([new_x4, image])
-
-	for x in tf.stack([new_x1, new_x2, new_x3])
-
-		with tf.name_scope('unstack'):
-			new_x = tf.unstack(new_x, 99, 0)
-			tf.summary.scalar('unstack', x)
-
-		# Define a lstm cell with tensorflow
-		with tf.name_scope('LSTM_cell'):
-			lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden, 
-						forget_bias=1.0, state_is_tuple=False)
-
-		state = tf.zeros([batch_size, lstm_cell.state_size])
-
-
-		# Get lstm cell output
-		with tf.name_scope('static_RNN'):
-
-			output, state = tf.contrib.rnn.static_rnn(lstm_cell, x, initial_state=state)
-
-
-		#upsample the output 
-
-		with tf.name_scope('cross-entropy'):
-			cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, 
-					labels=logits_curr))
-
-			loss.append(cost)
-
-
-		with tf.name_scope('accuracy'):
-	
-			with tf.name_scope('correct_prediction'):
-				correct_prediction = tf.equal(logits_last, logits_curr)
-	
-			with tf.name_scope('accuracy'):
-				accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
-
-				tf.summary.scalar('accuracy', accuracy)
-
-		last_image = image
-
-		with tf.name_scope('train'):
-				optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+	with tf.name_scope('train'):
+			optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
 	#[loss, accuracy] = RNN(x, weights, biases)
-
-
-
-	
-
-
-
-	
 
 
 	
