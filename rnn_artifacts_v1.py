@@ -19,6 +19,8 @@ import random as rand
 
 # Creates artifact using images in path, export images to path_out 
 def create_artifacts(path, path_out):
+
+    assert os.path.isdir(path_out) == False, 'file_path already exists, please choose a different path to avoid overwriting'
     
     imgs = []
 
@@ -57,10 +59,15 @@ def create_artifacts(path, path_out):
 
     #pull real-valued and complex-valued image 
     for image in imgs:
-        
-        temp_complex = image[:, 128:256]
 
-        temp_real = image[:,0:128]
+        print(image.shape)
+
+        temp_complex = image[:, 80:160]
+
+        temp_real = image[:,0:80]
+
+        print(temp_complex.shape)
+        print(temp_real.shape)
         
         complex_images.append(temp_complex)
         real_images.append(temp_real)
@@ -90,34 +97,56 @@ def create_artifacts(path, path_out):
             new_complex.append(image)
 
     #put the images back tohether, either on two sides or as one magnitude image 
-    sum_images = []
+    sum_images_clean = []
 
-    for (real, comp) in zip(real_images, new_complex):
-        temp_image = np.empty((256, 128))
+    for (real, comp) in zip(real_images, complex_images):
+        temp_image = np.empty((180, 80))
         real = np.asarray(real)
         comp = np.asarray(comp)
-            
-        #temp_image[:,0:128] = real
-        #temp_image[:,128:256] = abs(comp)
+
+        temp_image = np.absolute(real+comp)
+        sum_images_clean.append(temp_image)
+
+    sum_images_clean = np.asarray(sum_images)
+
+    sum_images_artif = []
+
+    for (real, comp) in zip(real_images, new_complex):
+        temp_image = np.empty((180, 80))
+        real = np.asarray(real)
+        comp = np.asarray(comp)
+
         temp_image = np.absolute(real+comp)
         sum_images.append(temp_image)
 
-    sum_images = np.asarray(sum_images)
+    sum_images_artif = np.asarray(sum_images)
     #print(sum_images.shape)
 
 
     #save to a different directory
 
-    file_path = path_out
-
-    assert os.path.isdir(file_path) == False, 'file_path already exists, please choose a different path to avoid overwriting'
+    file_path = path_out + "clean"
 
     if not os.path.isdir(file_path):
         os.makedirs(file_path)
 
     for (f, image) in zip(os.listdir(path), sum_images):
 
-        save_path = file_path + "/" + f + "train_artifact.jpg"
+        save_path = file_path + "/" + f + "clean.jpg"
+
+        image = np.asarray(np.absolute(image), dtype=float)
+
+        plot.image.imsave(save_path, image)
+
+
+    file_path = path_out + "artifacts"
+
+    if not os.path.isdir(file_path):
+        os.makedirs(file_path)
+
+    for (f, image) in zip(os.listdir(path), sum_images):
+
+        save_path = file_path + "/" + f + "artifacts.jpg"
 
         image = np.asarray(np.absolute(image), dtype=float)
 

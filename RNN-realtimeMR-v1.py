@@ -41,6 +41,8 @@ def import_images():
 	path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed'
 	path_out = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN'
 
+	assert os.path.isdir(path_out) == False, 'file_path already exists, please choose a different path to avoid overwriting'
+
 	# Create artifacts 
 	response = input('Do you need to create artifacts? (y/n)')
 
@@ -58,6 +60,10 @@ def import_images():
 
 	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
 	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
+
+	assert os.path.isdir(file_path) == False, 'file_path already exists, please choose a different path to avoid overwriting'
+
+	assert os.path.isdir(artif_path) == False, 'file_path already exists, please choose a different path to avoid overwriting'
 
 	clean_imgs = []
 	artifact_imgs = []
