@@ -38,8 +38,8 @@ def import_images():
 	# Create artifacts - update paths as needed 
 	#path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train'
 	#path_out= r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
-	path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases'
-	path_out = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases_RNN'
+	path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed'
+	path_out = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN'
 
 	# Create artifacts 
 	response = input('Do you need to create artifacts? (y/n)')
@@ -56,8 +56,8 @@ def import_images():
 	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_clean'
 	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
 
-	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2517'
-	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases_RNN'
+	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
 
 	clean_imgs = []
 	artifact_imgs = []
@@ -245,7 +245,7 @@ def train(images, vimages):
 
 		# Unstack to get a list of 'n_steps' tensors of shape (batch_size, n_input_x, n_input_y)
 
-	def layers(x, last_error, name):
+	def layers(x, last_error, layer, name):
 
 		with tf.name_scope(name):
 
@@ -255,12 +255,12 @@ def train(images, vimages):
 				x = tf.unstack(x, 99, 0)
 				tf.summary.scalar('unstack', x)
 
-			count = 1
+			count = 0
 			loop = 0
-			new_x1 = np.zeros([256,64,1,1])
-			new_x2 = np.zeros([256,64,1,1])
-			new_x3 = np.zeros([256,64,1,1])
-			new_x4 = np.zeros([256,64,1,1])
+			new_x1 = []#np.zeros([1, 256,64,1,1])
+			new_x2 = []#np.zeros([1, 256,64,1,1])
+			new_x3 = []#np.zeros([1, 256,64,1,1])
+			new_x4 = []#np.zeros([1, 256,64,1,1])
 
 			for image in x:
 
@@ -270,13 +270,11 @@ def train(images, vimages):
 				
 					image  = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
 
-					if loop != 0 :
+					image = image[np.newaxis, :,:,:,:]
 
-						image = image[np.newaxis, :,:,:,:]
+					new_x1.append(image)
 
-					new_x1 = tf.stack([new_x1, image])
-
-					loop = loop + 1
+					count = count + 1
 
 					continue
 
@@ -284,12 +282,11 @@ def train(images, vimages):
 				
 					image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
 
-					if loop != 0 :
+					image = image[np.newaxis, :,:,:,:]
 
-						image = image[np.newaxis, :,:,:,:]
+					new_x2.append(image)
 
-					new_x2 = tf.stack([new_x2, image])
-					loop = loop + 1
+					count = count + 1
 
 					continue
 
@@ -297,28 +294,33 @@ def train(images, vimages):
 
 					image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
 
-					if loop != 0 :
+					image = image[np.newaxis, :,:,:,:]
 
-						image = image[np.newaxis, :,:,:,:]
+					new_x3.append(image)
 
-					new_x3 = tf.stack([new_x3, image])
-					loop = loop + 1
+					count = count + 1
 
 					continue
 
 				if count == 6 or count == 12 or count == 18:
 
-					if loop != 0 :
+					image = image[np.newaxis, :,:,:,:]
 
-						image = image[np.newaxis, :,:,:,:]
+					new_x4.append(image)
 
-					new_x4 = tf.stack([new_x4, image])
-					loop = loop + 1
+					count = count + 1
+
 					continue 
 
-			new_x4 = tf.unstack(new_x4, 3, 0)
+			new_x1 = new_x1[1:][:][:][:][:]
+			new_x2 = new_x2[1:][:][:][:][:]
+			new_x3 = new_x3[1:][:][:][:][:]
+			new_x4 = new_x4[1:][:][:][:][:]
 
-			for x in tf.stack([new_x1, new_x2, new_x3]):
+
+			for x in tf.unstack(tf.stack([new_x1, new_x2, new_x3])):
+
+				count = 0
 
 				x = tf.unstack(x,5,0)
 
@@ -341,46 +343,134 @@ def train(images, vimages):
 
 						output, state = tf.contrib.rnn.static_rnn(lstm_cell, x, initial_state=state)
 
-					feat_real = tf.nn.conv2d(input = new_x4[count], filter = proj_weights, strides = [1,1,1,1], padding = 'SAME') + proj_biases
+					if layer == 1:
+						image = new_x4[count]
 
-					feat_proj = tf.nn.conv2d(input = output, filter = proj_weights, strides = [1,1,1,1], padding = 'SAME') + proj_biases
+					else:
+
+						image = last_error
+
+					def nn_layer(input_tensor, input_dim, n_filters_1, layer_name):
+
+	
+						# Adding a name scope ensures logical grouping of the layers in the graph.
+						with tf.name_scope(layer_name):
+						# This Variable will hold the state of the weights for the layer
+							with tf.name_scope('weights'):
+								weights = weight_variable([input_dim, input_dim, n_filters_1])
+								variable_summaries(weights)
+						
+							with tf.name_scope('biases'):
+								biases = bias_variable([depth*n_filters_1])
+								variable_summaries(biases)
+						
+							with tf.name_scope('Wx_plus_b'):
+								activations = tf.nn.relu(tf.nn.conv2d(input=input_tensor, filter=weights, strides=[1,2,2,1], padding='SAME') + biases)
+
+								tf.summary.image('input_times_gradient', input_tensor*(tf.gradient(weights)))
+
+								feature_map = tf.slice(preactivate,[0,0,0,0],[-1,-1,-1,1])
+
+								tf.summary.image(layer_name, feature_map,1)
+
+							with tf.name_scope('pool'):
+
+								ksize = [1, 1, 1, 1]
+
+								strides = [2,2, 1, 1]
+
+								out_layer = tf.nn.max_pool(activations, ksize=ksize, strides=strides, padding='SAME')
+								tf.summary.histogram('pooling', out_layer)
 
 
-					with tf.name_scope('deconv') as scope:
-						upsampled = tf.nn.conv2d_transpose(feat_proj, [1, 1, 1, 1], [1, 26, 20, 1], [1, 2, 2, 1], padding='SAME', name=None)
+							return out_layer
+
+					n_input = 4
+					n_filters = 1
+
+					#layer 1:
+
+					feat_real = nn_layer(new_x4[count], n_input, n_filters, 'layer1')
+
+					feat_proj = nn_layer(output, n_input, n_filters, 'layer1')
+
+
+					#layer 2:
+
+					feat_real = nn_layer(new_x4[count], n_input, n_filters, 'layer2')
+
+					feat_proj = nn_layer(output, n_input, n_filters, 'layer2')
+
+					#layer 2:
+
+					feat_real = nn_layer(new_x4[count], n_input, n_filters, 'layer2')
+
+					feat_proj = nn_layer(output, n_input, n_filters, 'layer2')
+
+					#layer 2:
+
+
+					feat_real = nn_layer(new_x4[count], n_input, n_filters, 'layer2')
+
+					feat_proj = nn_layer(output, n_input, n_filters, 'layer2')
+
+					#fully connected:
+
+					shape_proj = feat_proj.get_shape().as_list()
+
+					reshape_proj = tf.reshape(feat_proj, [shape[0], shape[1] * shape[2] * shape[3]])
+
+					shape_real = feat_real.get_shape().as_list()
+
+					reshape_real = tf.reshape(feat_real, [shape[0], shape[1] * shape[2] * shape[3]])
+
+					hidden_proj = tf.nn.relu(tf.matmul(reshape_proj, proj_weights) + proj_biases)
+
+					hidden_real = tf.nn.relu(tf.matmul(reshape_proj, proj_weights) + proj_biases)
+
+					
 
 					with tf.name_scope('cross-entropy'):
-						cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=feat_proj, 
-								labels=feat_real))
+						cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=hidden_proj, 
+								labels=hidden_real))
 
 						loss.append(cost)
-
-					error = cost
 
 
 					with tf.name_scope('accuracy'):
 				
 						with tf.name_scope('correct_prediction'):
-							correct_prediction = tf.equal(logits_last, logits_curr)
+
+							correct_prediction = tf.equal(hidden_real, hidden_proj)
 				
 						with tf.name_scope('accuracy'):
+
 							accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 
 							tf.summary.scalar('accuracy', accuracy)
+
+					with tf.name_scope('deconv'):
+
+						upsampled = tf.nn.conv2d_transpose(hidden_proj, [1, 1, 1, 1], [1, 256, 128, 1], 2, padding='SAME', name=None) # and then update this to properly upsample 
 
 					count = count + 1
 		
 		return loss, upsampled, feat_proj
 
-	[loss, upsampled, features] = layers(x, 0, 'layer1')
-	[loss, upsampled, features] = layers(upsampled, loss, 'layer2')
-	[loss, upsampled, features] = layers(upsampled, loss, 'layer3')
-	[loss, upsampled, features] = layers(upsampled, loss, 'layer4')
+	[loss1, upsampled1, features1] = layers(x, 0, 1, 'layer1')
+	[loss2, upsampled2, features2] = layers(upsampled1, loss1, 2, 'layer2')
+	[loss3, upsampled3, features3] = layers(upsampled2, loss2, 3, 'layer3')
+	[loss4, upsampled4, features4] = layers(upsampled3, loss3, 4, 'layer4')
+
+	with tf.name_scope('latent features'):
+
+		features = tf.stack[features1, features2, features3, features4]
+		tf.summary.scalar('latent featires', features)
+
 
 	with tf.name_scope('train'):
-			optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
+		optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)
 
-	#[loss, accuracy] = RNN(x, weights, biases)
 	
 # Evaluate model
 
