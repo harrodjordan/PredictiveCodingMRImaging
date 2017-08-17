@@ -60,14 +60,14 @@ def create_artifacts(path, path_out):
     #pull real-valued and complex-valued image 
     for image in imgs:
 
-        print(image.shape)
+        #print(image.shape)
 
         temp_complex = image[:, 80:160]
 
         temp_real = image[:,0:80]
 
-        print(temp_complex.shape)
-        print(temp_real.shape)
+        #print(temp_complex.shape)
+        #print(temp_real.shape)
         
         complex_images.append(temp_complex)
         real_images.append(temp_real)
@@ -107,7 +107,7 @@ def create_artifacts(path, path_out):
         temp_image = np.absolute(real+comp)
         sum_images_clean.append(temp_image)
 
-    sum_images_clean = np.asarray(sum_images)
+    sum_images_clean = np.asarray(sum_images_clean)
 
     sum_images_artif = []
 
@@ -117,9 +117,9 @@ def create_artifacts(path, path_out):
         comp = np.asarray(comp)
 
         temp_image = np.absolute(real+comp)
-        sum_images.append(temp_image)
+        sum_images_artif.append(temp_image)
 
-    sum_images_artif = np.asarray(sum_images)
+    sum_images_artif = np.asarray(sum_images_artif)
     #print(sum_images.shape)
 
 
@@ -130,7 +130,7 @@ def create_artifacts(path, path_out):
     if not os.path.isdir(file_path):
         os.makedirs(file_path)
 
-    for (f, image) in zip(os.listdir(path), sum_images):
+    for (f, image) in zip(os.listdir(path), sum_images_clean):
 
         save_path = file_path + "/" + f + "clean.jpg"
 
@@ -144,7 +144,7 @@ def create_artifacts(path, path_out):
     if not os.path.isdir(file_path):
         os.makedirs(file_path)
 
-    for (f, image) in zip(os.listdir(path), sum_images):
+    for (f, image) in zip(os.listdir(path), sum_images_artif):
 
         save_path = file_path + "/" + f + "artifacts.jpg"
 
