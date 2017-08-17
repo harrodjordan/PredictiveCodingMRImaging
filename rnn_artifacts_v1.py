@@ -102,7 +102,7 @@ def create_artifacts(path, path_out):
     for (real, comp) in zip(real_images, complex_images):
         temp_image = np.empty((180, 80))
         real = np.asarray(real)
-        comp = np.asarray(comp)
+        comp = np.asarray(comp)*8*np.pi
 
         temp_image = np.absolute(real+comp)
         sum_images_clean.append(temp_image)
@@ -114,7 +114,7 @@ def create_artifacts(path, path_out):
     for (real, comp) in zip(real_images, new_complex):
         temp_image = np.empty((180, 80))
         real = np.asarray(real)
-        comp = np.asarray(comp)
+        comp = np.asarray(comp)*8*np.pi
 
         temp_image = np.absolute(real+comp)
         sum_images_artif.append(temp_image)
@@ -125,7 +125,7 @@ def create_artifacts(path, path_out):
 
     #save to a different directory
 
-    file_path = path_out + "clean"
+    file_path = path_out + "/clean"
 
     if not os.path.isdir(file_path):
         os.makedirs(file_path)
@@ -139,7 +139,7 @@ def create_artifacts(path, path_out):
         plot.image.imsave(save_path, image)
 
 
-    file_path = path_out + "artifacts"
+    file_path = path_out + "/artifacts"
 
     if not os.path.isdir(file_path):
         os.makedirs(file_path)

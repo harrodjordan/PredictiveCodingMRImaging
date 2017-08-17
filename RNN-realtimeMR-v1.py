@@ -14,9 +14,9 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import PIL.Image
 import os, os.path
-import tkinter as Tk
-from tkinter import filedialog
-from tkinter import *
+#import tkinter as Tk
+#from tkinter import filedialog
+#from tkinter import *
 from tensorflow.python import debug as tf_debug
 from rnn_artifacts_v1 import *
 
@@ -38,8 +38,11 @@ def import_images():
 	# Create artifacts - update paths as needed 
 	#path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train'
 	#path_out= r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
-	path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed'
-	path_out = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN'
+	#path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed'
+	#path_out = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN'
+
+	path = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed'
+        path_out = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN'
 
 	assert os.path.isdir(path_out) == False, 'file_path already exists, please choose a different path to avoid overwriting'
 
@@ -58,8 +61,11 @@ def import_images():
 	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_clean'
 	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
 
-	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
-	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
+	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
+
+	file_path = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+        artif_path = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
 
 	assert os.path.isdir(file_path) == False, 'file_path already exists, please choose a different path to avoid overwriting'
 
@@ -571,12 +577,12 @@ if __name__ == '__main__':
 	parser.add_argument(
 	  '--data_dir',
 	  type=str,
-	  default='/tmp/tensorflow/mnist/input_data',
+	  default='/mnt/raid5/jordan/tmp/input_data',
 	  help='Directory for storing input data')
 	parser.add_argument(
 	  '--log_dir',
 	  type=str,
-	  default='/tmp/tensorflow/mnist/logs/mnist_with_summaries',
+	  default='/mnt/raid5/jordan/tmp/summaries',
 	  help='Summaries log directory')
 
 	FLAGS, unparsed = parser.parse_known_args()
