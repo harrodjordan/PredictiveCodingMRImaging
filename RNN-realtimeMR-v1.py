@@ -287,47 +287,47 @@ with tf.device('/gpu:1'):
 
 				for image in x:
 
-					image = image[:,:,np.newaxis,np.newaxis]
+					image = image[:,:,np.newaxis]
 
 					if count < 6:
 					
 						image  = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
 
-						image = image[np.newaxis, :,:,:,:]
+						image = image[np.newaxis,:,:,:]
 
 						new_x1.append(image)
 
 						count = count + 1
 
-						continue
+#						continue
 
-					if count < 12:
+					if 6 <= count < 12:
 					
 						image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
 
-						image = image[np.newaxis, :,:,:,:]
+						image = image[np.newaxis, :,:,:]
 
 						new_x2.append(image)
 
 						count = count + 1
 
-						continue
+#						continue
 
-					if count < 18:
+					if 12<= count < 18:
 
 						image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
 
-						image = image[np.newaxis, :,:,:,:]
+						image = image[np.newaxis, :,:,:]
 
 						new_x3.append(image)
 
 						count = count + 1
 
-						continue
+#						continue
 
 					if count == 6 or count == 12 or count == 18:
 
-						image = image[np.newaxis, :,:,:,:]
+						image = image[np.newaxis, :,:,:]
 
 						new_x4.append(image)
 
@@ -339,7 +339,7 @@ with tf.device('/gpu:1'):
 				new_x2 = new_x2[1:][:][:][:][:]
 				new_x3 = new_x3[1:][:][:][:][:]
 				new_x4 = new_x4[1:][:][:][:][:]
-				print(new_x4.shape)
+				print(np.asarray(new_x4).shape)
 
 
 				for x in tf.unstack(tf.stack([new_x1, new_x2, new_x3])):
