@@ -398,7 +398,7 @@ with tf.device('/gpu:1'):
 					for output in x:
 
 						
-						if real = True : 
+						if real == True : 
 						#layer 1:
 
 							feat_proj = nn_layer(output, n_input, n_filters, 'layer1')
@@ -417,7 +417,7 @@ with tf.device('/gpu:1'):
 
 							latent.append(feat_proj)
 
-						else 
+						else: 
 
 							feat_real = nn_layer(image, n_input, n_filters, 'layer1')
 
