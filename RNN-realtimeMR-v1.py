@@ -339,6 +339,7 @@ with tf.device('/gpu:1'):
 				new_x2 = new_x2[1:][:][:][:][:]
 				new_x3 = new_x3[1:][:][:][:][:]
 				new_x4 = new_x4[1:][:][:][:][:]
+				print(new_x4.shape)
 
 
 				for x in tf.unstack(tf.stack([new_x1, new_x2, new_x3])):
