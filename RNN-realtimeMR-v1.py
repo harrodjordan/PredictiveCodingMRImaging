@@ -395,7 +395,7 @@ with tf.device('/gpu:1'):
 
 						image = last_error
 
-					for output in x
+					for output in x:
 
 						
 						if real = True : 
