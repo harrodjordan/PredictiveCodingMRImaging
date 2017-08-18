@@ -28,7 +28,7 @@ FLAGS = None
 
 
 
-with tf.device('/gpu:1'):
+with tf.device('/gpu:0'):
 
 	def import_images():
 
@@ -277,69 +277,73 @@ with tf.device('/gpu:1'):
 					x = tf.unstack(x, 18, 0)
 					tf.summary.scalar('unstack', x)
 
-				count = 0
+				count = 1
 				loop = 0
 
-				new_x1 = [] #np.zeros([1, 256,64,1,1])
-				new_x2 = [] #np.zeros([1, 256,64,1,1])
-				new_x3 = [] #np.zeros([1, 256,64,1,1])
-				new_x4 = [] #np.zeros([1, 256,64,1,1])
+				new_x1, new_x2, new_x3 = tf.split(x,3,axis=0)
 
-				for image in x:
+				new_x1 , temp1a = tf.split(new_x1, [5,1], axis=0)
+				new_x2 , temp2a = tf.split(new_x2, [5,1], axis=0)
+				new_x3 , temp3a = tf.split(new_x3, [5,1], axis=0)
 
-					image = image[:,:,np.newaxis]
+				new_x4 =tf.unstack(tf.stack([temp1a, temp2a, temp3a]))
 
-					if count < 6:
-					
-						image  = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
+				print(np.array(x).shape)
 
-						image = image[np.newaxis,:,:,:]
-
-						new_x1.append(image)
-
-						count = count + 1
-
+#				for image in x:
+#
+#					image = image[:,:,np.newaxis]
+#
+#					if count == 6 or count == 12 or count == 18:
+#						image = image[np.newaxis, :,:,:]
+#						new_x4.append(image)
+#						count = count + 1
 #						continue
-
-					if 6 <= count < 12:
-					
-						image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
-
-						image = image[np.newaxis, :,:,:]
-
-						new_x2.append(image)
-
-						count = count + 1
-
+#
+#					if count < 6:
+#						image = image[:,:,:,np.newaxis]
+#
+#						image  = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
+#
+#						image = image[np.newaxis,:,:,:]
+#
+#						new_x1.append(image)
+#
+#						count = count + 1
+#
 #						continue
-
-					if 12<= count < 18:
-
-						image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
-
-						image = image[np.newaxis, :,:,:]
-
-						new_x3.append(image)
-
-						count = count + 1
-
+#
+#					if 6 < count < 12:
+#						image = np.squeeze(image, axis=0)
+#
+#						image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
+#
+#						image = image[np.newaxis, :,:,:]
+#
+#						new_x2.append(image)
+#
+#						count = count + 1
+#
 #						continue
-
-					if count == 6 or count == 12 or count == 18:
-
-						image = image[np.newaxis, :,:,:]
-
-						new_x4.append(image)
-
-						count = count + 1
-
-						continue 
-
-				new_x1 = new_x1[1:][:][:][:][:]
-				new_x2 = new_x2[1:][:][:][:][:]
-				new_x3 = new_x3[1:][:][:][:][:]
-				new_x4 = new_x4[1:][:][:][:][:]
-				print(np.asarray(new_x4).shape)
+#
+#					if 12< count < 18:
+#
+#						image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
+#
+#						image = image[np.newaxis, :,:,:]
+#
+#						new_x3.append(image)
+#
+#						count = count + 1
+#
+#						continue
+#
+#
+#				new_x1 = new_x1[1:][:][:][:][:]
+#				new_x2 = new_x2[1:][:][:][:][:]
+#				new_x3 = new_x3[1:][:][:][:][:]
+#				new_x4 = new_x4[1:][:][:][:][:]
+#				print(np.asarray(new_x4).shape)
 
 
 				for x in tf.unstack(tf.stack([new_x1, new_x2, new_x3])):
@@ -355,19 +359,19 @@ with tf.device('/gpu:1'):
 							with tf.name_scope(layer_name):
 							# This Variable will hold the state of the weights for the layer
 								with tf.name_scope('weights'):
-									weights = weight_variable([input_dim, input_dim, n_filters_1])
+									weights = weight_variable([input_dim, input_dim, n_filters_1, 1])
 									variable_summaries(weights)
 							
 								with tf.name_scope('biases'):
-									biases = bias_variable([depth*n_filters_1])
+									biases = bias_variable([n_filters_1])
 									variable_summaries(biases)
 							
 								with tf.name_scope('Wx_plus_b'):
 									activations = tf.nn.relu(tf.nn.conv2d(input=input_tensor, filter=weights, strides=[1,2,2,1], padding='SAME') + biases)
 
-									tf.summary.image('input_times_gradient', input_tensor*(tf.gradient(weights)))
+#									tf.summary.image('input_times_gradient', input_tensor*(tf.gradient(weights)))
 
-									feature_map = tf.slice(preactivate,[0,0,0,0],[-1,-1,-1,1])
+									feature_map = tf.slice(activations,[0,0,0,0],[-1,-1,-1,1])
 
 									tf.summary.image(layer_name, feature_map,1)
 
@@ -375,7 +379,7 @@ with tf.device('/gpu:1'):
 
 									ksize = [1, 1, 1, 1]
 
-									strides = [1,1, 1, 1]
+									strides = [1,1, 2, 1]
 
 									out_layer = tf.nn.max_pool(activations, ksize=ksize, strides=strides, padding='SAME')
 									tf.summary.histogram('pooling', out_layer)
@@ -385,71 +389,72 @@ with tf.device('/gpu:1'):
 
 					n_input = 4
 					n_filters = 1
-					latent = []
-					valid = []
-					real = False 
+					latent =np.zeros([1,12,1,1])
+					valid = [] 
 
 					if layer == 1:
 						image = new_x4[count]
+						image = image[:,:,:,np.newaxis]
 
 					else:
 
 						image = last_error
+					
+					loop = 0
+
+					feat_real = nn_layer(image, n_input, n_filters, 'layer1')
+
+
+
+                                                        #layer 2:
+
+                                        feat_real = nn_layer(feat_real, n_input, n_filters, 'layer2')
+
+ #                                       feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer2')
+
+                                                        #layer 2:
+
+                                        feat_real = nn_layer(feat_real, n_input, n_filters, 'layer3')
+
+  #                                      feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer3')
+
+                                                        #layer 2:
+
+
+                                        feat_real = nn_layer(feat_real, n_input, n_filters, 'layer4')
+
+   #                                    feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer4')
+						
+                                        valid = feat_real
 
 					for output in x:
 
-						
-						if real == True : 
+						output = output[np.newaxis,:,:,np.newaxis]
+
+
+
 						#layer 1:
 
-							feat_proj = nn_layer(output, n_input, n_filters, 'layer1')
+						feat_proj = nn_layer(output, n_input, n_filters, 'layer1')
+
+							#layer 2:
+						feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer2')
 
 							#layer 2:
 
-							feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer2')
+						feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer3')
 
 							#layer 2:
 
-							feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer3')
+						feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer4')
 
-							#layer 2:
-
-							feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer4')
-
-							latent.append(feat_proj)
-
-						else: 
-
-							feat_real = nn_layer(image, n_input, n_filters, 'layer1')
-
-							feat_proj = nn_layer(output, n_input, n_filters, 'layer1')
+						tf.concat([latent,feat_proj], axis=0)
 
 
-							#layer 2:
-
-							feat_real = nn_layer(feat_real, n_input, n_filters, 'layer2')
-
-							feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer2')
-
-							#layer 2:
-
-							feat_real = nn_layer(feat_real, n_input, n_filters, 'layer3')
-
-							feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer3')
-
-							#layer 2:
-
-
-							feat_real = nn_layer(feat_real, n_input, n_filters, 'layer4')
-
-							feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer4')
-
-							valid = feat_real
-							latent = feat_proj
-
-							real = True
-
-
+					latent = latent[1:]
+#					latent = tf.unstack(latent, 5, 0)
+					latent = np.squeeze(latent)
+					print(np.array(latent).shape)
 
 					# Define a lstm cell with tensorflow
 					with tf.name_scope('LSTM_cell'):
