@@ -217,14 +217,14 @@ with tf.device('/gpu:0'):
 
 		learning_rate = 0.001
 		training_iters = 1000
-		batch_size = 256
+		batch_size = 5
 		display_step = 10
 
 	# Network Parameters
 		n_input_x = 80 # data input (img shape: 28*28)
 		n_input_y = 180 
 		n_steps = 99 # timesteps
-		n_hidden = 128 # hidden layer num of features
+		n_hidden = 12 # hidden layer num of features
 		n_classes = 1 # MNIST total classes (0-9 digits)
 
 	# tf Graph input
@@ -290,82 +290,26 @@ with tf.device('/gpu:0'):
 
 				print(np.array(x).shape)
 
-#				for image in x:
-#
-#					image = image[:,:,np.newaxis]
-#
-#					if count == 6 or count == 12 or count == 18:
-#						image = image[np.newaxis, :,:,:]
-#						new_x4.append(image)
-#						count = count + 1
-#						continue
-#
-#					if count < 6:
-#						image = image[:,:,:,np.newaxis]
-#
-#						image  = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
-#
-#						image = image[np.newaxis,:,:,:]
-#
-#						new_x1.append(image)
-#
-#						count = count + 1
-#
-#						continue
-#
-#					if 6 < count < 12:
-#						image = np.squeeze(image, axis=0)
-#
-#						image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
-#
-#						image = image[np.newaxis, :,:,:]
-#
-#						new_x2.append(image)
-#
-#						count = count + 1
-#
-#						continue
-#
-#					if 12< count < 18:
-#
-#						image = tf.nn.conv2d(input =image, filter=weights, strides=[2,2,1,1], padding='SAME') + biases
-#
-#						image = image[np.newaxis, :,:,:]
-#
-#						new_x3.append(image)
-#
-#						count = count + 1
-#
-#						continue
-#
-#
-#				new_x1 = new_x1[1:][:][:][:][:]
-#				new_x2 = new_x2[1:][:][:][:][:]
-#				new_x3 = new_x3[1:][:][:][:][:]
-#				new_x4 = new_x4[1:][:][:][:][:]
-#				print(np.asarray(new_x4).shape)
-
-
 				for x in tf.unstack(tf.stack([new_x1, new_x2, new_x3])):
 
 					count = 0
 
 					x = tf.unstack(x,5,0)
+					print(np.array(x).shape)
 
 					def nn_layer(input_tensor, input_dim, n_filters_1, layer_name):
 
-		
 							# Adding a name scope ensures logical grouping of the layers in the graph.
 							with tf.name_scope(layer_name):
 							# This Variable will hold the state of the weights for the layer
 								with tf.name_scope('weights'):
 									weights = weight_variable([input_dim, input_dim, n_filters_1, 1])
 									variable_summaries(weights)
-							
+
 								with tf.name_scope('biases'):
 									biases = bias_variable([n_filters_1])
 									variable_summaries(biases)
-							
+
 								with tf.name_scope('Wx_plus_b'):
 									activations = tf.nn.relu(tf.nn.conv2d(input=input_tensor, filter=weights, strides=[1,2,2,1], padding='SAME') + biases)
 
@@ -389,7 +333,7 @@ with tf.device('/gpu:0'):
 
 					n_input = 4
 					n_filters = 1
-					latent =np.zeros([1,12,1,1])
+					t1 = t2 = t3 = t4 = t5 = 0
 					valid = [] 
 
 					if layer == 1:
@@ -399,75 +343,65 @@ with tf.device('/gpu:0'):
 					else:
 
 						image = last_error
-					
+
 					loop = 0
 
 					feat_real = nn_layer(image, n_input, n_filters, 'layer1')
 
-
-
-                                                        #layer 2:
+                                        #layer 2:
 
                                         feat_real = nn_layer(feat_real, n_input, n_filters, 'layer2')
 
- #                                       feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer2')
-
-                                                        #layer 2:
+                                        #layer 2:
 
                                         feat_real = nn_layer(feat_real, n_input, n_filters, 'layer3')
 
-  #                                      feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer3')
-
-                                                        #layer 2:
-
+                                        #layer 2:
 
                                         feat_real = nn_layer(feat_real, n_input, n_filters, 'layer4')
 
-   #                                    feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer4')
-						
                                         valid = feat_real
+
+					count = 0
 
 					for output in x:
 
 						output = output[np.newaxis,:,:,np.newaxis]
 
-
-
 						#layer 1:
-
 						feat_proj = nn_layer(output, n_input, n_filters, 'layer1')
 
-							#layer 2:
+						#layer 2:
 						feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer2')
 
-							#layer 2:
-
+						#layer 3:
 						feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer3')
 
-							#layer 2:
-
+						#layer 4:
 						feat_proj = nn_layer(feat_proj, n_input, n_filters, 'layer4')
 
-						tf.concat([latent,feat_proj], axis=0)
+						if count == 0: t1 = tf.squeeze(feat_proj)
+						if count == 1: t2 = tf.squeeze(feat_proj)
+						if count == 2: t3 = tf.squeeze(feat_proj)
+						if count == 3: t4 = tf.squeeze(feat_proj)
+						if count == 4: t5 = tf.squeeze(feat_proj)
+						count = count + 1
 
+					latent = tf.unstack(tf.stack([t1, t2, t3, t4, t5]))
 
-					latent = latent[1:]
-#					latent = tf.unstack(latent, 5, 0)
-					latent = np.squeeze(latent)
 					print(np.array(latent).shape)
 
 					# Define a lstm cell with tensorflow
 					with tf.name_scope('LSTM_cell'):
-						lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden, 
-									forget_bias=0.5, state_is_tuple=False)
 
-					state = tf.zeros([batch_size, lstm_cell.state_size])
+						lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden,forget_bias=0.5, state_is_tuple=True)
 
+						state = lstm_cell.zero_state(batch_size, tf.float32)
 
 					# Get lstm cell output
 					with tf.name_scope('static_RNN'):
 
-						output, state = tf.contrib.rnn.static_rnn(lstm_cell, latent, initial_state=state)
+						output, state = tf.contrib.rnn.static_rnn(lstm_cell, latent, dtype=tf.float32) # , initial_state=state)
 
 
 					shape = output.get_shape().as_list()
@@ -480,21 +414,19 @@ with tf.device('/gpu:0'):
 
 					hidden_real = tf.nn.relu(tf.matmul(reshape_proj, proj_weights) + proj_biases)
 
-					
+
 
 					with tf.name_scope('cross-entropy'):
-						cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=hidden_proj, 
-								labels=hidden_real))
+						cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=hidden_proj, labels=hidden_real))
 
 						loss.append(cost)
 
 
 					with tf.name_scope('accuracy'):
-				
+
 						with tf.name_scope('correct_prediction'):
 
 							correct_prediction = tf.equal(hidden_real, hidden_proj)
-				
 						with tf.name_scope('accuracy'):
 
 							accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
@@ -506,7 +438,7 @@ with tf.device('/gpu:0'):
 						upsampled = tf.nn.conv2d_transpose(hidden_proj, [1, 1, 1, 1], [1, 256, 128, 1], 2, padding='SAME', name=None) # and then update this to properly upsample 
 
 					count = count + 1
-			
+
 			return loss, upsampled, feat_proj
 
 		[loss1, upsampled1, features1] = layers(x, [], 1, 'layer1')
