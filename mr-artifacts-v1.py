@@ -22,7 +22,8 @@ import random as rand
 
 imgs = []
 
-path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train'
+path = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN
+#path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train'
 #path = image_path
 
 valid_images = [".jpg"]
@@ -57,9 +58,9 @@ count = 0
 
 for image in imgs:
     
-    temp_complex = image[:, 128:256]
+    temp_complex = image[:, 80:160]
 
-    temp_real = image[:,0:128]
+    temp_real = image[:,0:80]
     
     complex_images.append(temp_complex) #change this to include the entire right half instead of just one pixel
     real_images.append(temp_real)
@@ -98,7 +99,7 @@ complex_num = 0
 for (real, comp) in zip(real_images, new_complex):
     temp_image = np.empty((256, 128))
     real = np.asarray(real)
-    comp = np.asarray(comp)
+    comp = np.asarray(comp)*(1/8*np.pi)
 
     #for (x,y) in zip(range(256),range(128)):
         
@@ -117,7 +118,7 @@ sum_images = np.asarray(sum_images)
 
 #save to a different directory
 
-file_path = "/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact"
+file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/train_artifact"
 
 if not os.path.isdir(file_path):
     os.makedirs(file_path)
