@@ -14,9 +14,9 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import PIL.Image
 import os, os.path
-import tkinter as Tk
-from tkinter import filedialog
-from tkinter import *
+#import tkinter as Tk
+#from tkinter import filedialog
+#from tkinter import *
 from tensorflow.python import debug as tf_debug
 
 
