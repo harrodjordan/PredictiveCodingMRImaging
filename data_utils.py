@@ -17,6 +17,7 @@ class SequenceGenerator(Iterator):
         self.sequence_start_mode = sequence_start_mode
         assert output_mode in {'error', 'prediction'}, 'output_mode must be in {error, prediction}'
         self.output_mode = output_mode
+        self.count = 0
 
         print(self.X.shape)
         
@@ -51,9 +52,9 @@ class SequenceGenerator(Iterator):
     def next(self):
         with self.lock:
             index_array, current_index, current_batch_size = next(self.index_generator)
-            current_batch_size = self.X.shape[0]
+            current_batch_size = self.X.shape[0]   
 
-        #batch_x = np.zeros((self.im_shape[0], 1, self.im_shape[1], self.im_shape[2]), np.float32)
+        current_index = self.count
 
         batch_x = np.expand_dims(self.X[current_index], axis=1)
 
@@ -62,8 +63,21 @@ class SequenceGenerator(Iterator):
         if self.output_mode == 'error':  # model outputs errors, so y should be zeros
             batch_y = np.zeros(1, np.float32)
             batch_y = batch_y[None,:]
+
         elif self.output_mode == 'prediction':  # output actual pixels
             batch_y = batch_x
+
+        if batch_x.shape[0] == 15 : 
+            if self.count == 14:
+                self.count = 0
+            else: 
+                self.count = self.count + 1
+
+        else :
+            if self.count == 4:
+                self.count = 0
+            else: 
+                self.count = self.count + 1
 
         return batch_x, batch_y
 
