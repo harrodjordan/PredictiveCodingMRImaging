@@ -109,6 +109,7 @@ for person in listofnames:
 				result = np.zeros([256,128])
 
 				result[:a.shape[0],:a.shape[1]] = a
+				result = np.rot90(result)
 				temp.append(np.asarray(result))
 
 			except FileNotFoundError:
@@ -118,7 +119,7 @@ for person in listofnames:
 
 	temp = np.array(temp)
 
-	temp = np.reshape(temp, [temp.shape[0],temp.shape[2],temp.shape[1]])
+	#temp = np.reshape(temp, [temp.shape[0],temp.shape[2],temp.shape[1]])
 
 
 
