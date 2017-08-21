@@ -1,4 +1,4 @@
-import hickle as hkl
+#import hickle as hkl
 import numpy as np
 from keras import backend as K
 from keras.preprocessing.image import Iterator
@@ -56,7 +56,7 @@ class SequenceGenerator(Iterator):
 
         current_index = self.count
 
-        batch_x = np.expand_dims(self.X[current_index], axis=1)
+        batch_x = np.expand_dims(self.X[current_index], axis=3)
 
         batch_x = batch_x[None, :, :, :, :]
 
