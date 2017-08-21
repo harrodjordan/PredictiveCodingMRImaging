@@ -44,8 +44,11 @@ def import_images():
 		words = s.split(c)
 		return c.join(words[:n]), c.join(words[n:])
   # Import data
-	file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_clean'
-	artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
+	file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+	artif_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
+	
+	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_clean'
+	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
 	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-noArtifactsRandom-Jul2517'
 	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/DCE-abdominal-50cases-wArtifactsRandom-Jul2517'
 
@@ -60,9 +63,10 @@ def import_images():
 
 	for f in os.listdir(file_path):
 
-		patient = split_at(f, "_",3)[0]
+		patient = split_at(f, "_",4)[0]
+		time = os.path.splitext(f)[0][-1]
 
-		if patient not in listofnames:
+		if patient not in listofnames and time == '1':
 
 			listofnames.append(patient)
 	
@@ -77,9 +81,9 @@ def import_images():
 		for f in os.listdir(path):
 		
 			ext = os.path.splitext(f)[1]
-
+			patient = split_at(f, "_",4)[1]
 		
-			if ext.lower() not in valid_images:
+			if ext.lower() not in valid_images or patient != ['time','1']:
 				continue
 
 			name = os.path.join(path,f)
@@ -105,8 +109,9 @@ def import_images():
 		for f in os.listdir(path):
 		
 			ext = os.path.splitext(f)[1]
+			patient = split_at(f, "_",4)[1]
 		
-			if ext.lower() not in valid_images:
+			if ext.lower() not in valid_images or patient != ['time','1']:
 				continue
 
 			name = os.path.join(path,f)
