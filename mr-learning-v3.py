@@ -463,12 +463,12 @@ if __name__ == '__main__':
 	parser.add_argument(
 	  '--data_dir',
 	  type=str,
-	  default='/tmp/tensorflow/mnist/input_data',
+	  default='/mnt/raid5/jordan/DCNN/input_data',
 	  help='Directory for storing input data')
 	parser.add_argument(
 	  '--log_dir',
 	  type=str,
-	  default='/tmp/tensorflow/mnist/logs/mnist_with_summaries',
+	  default='/mnt/raid5/jordan/DCNN/mnist_with_summaries',
 	  help='Summaries log directory')
 
 	FLAGS, unparsed = parser.parse_known_args()
