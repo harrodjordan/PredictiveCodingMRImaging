@@ -261,7 +261,10 @@ def train(labels, images, vlabels, vimages):
 				tf.summary.histogram('pre_activations', preactivate)
 				tf.summary.image('input_times_gradient', input_tensor*(tf.gradient(weights)))
 				feature_map = tf.slice(preactivate,[0,0,0,0],[-1,-1,-1,1])
-				tf.summary.image(layer_name, feature_map,1)
+				feature_map = tf.reshape(feature_map, 180, 80, 1))
+				feature_map = tf.transpose(feature_map, (2, 0, 1))
+				feature_map = tf.reshape(feature_map, (-1, 180, 80, 1))
+				tf.summary.image(layer_name, feature_map)
 
 			with tf.name_scope('pool'):
 				ksize = [1, 1, 1, 1]
