@@ -65,7 +65,7 @@ def import_images():
 
 		patient = split_at(f, "_",4)[0]
 
-		if patient not in listofnames 
+		if patient not in listofnames: 
 
 			listofnames.append(patient)
 	
