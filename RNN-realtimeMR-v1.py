@@ -35,11 +35,11 @@ with tf.device('/gpu:0'):
 		# Create artifacts - update paths as needed 
 		#path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train'
 		#path_out= r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
-		#path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed'
-		#path_out = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN'
+		path = r'/Users/jordanharrod/Dropbox/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed'
+		path_out = r'/Users/jordanharrod/Dropbox/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN'
 
-		path = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed'
-		path_out = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN'
+		#path = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed'
+		#path_out = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN'
 
 
 
@@ -58,11 +58,12 @@ with tf.device('/gpu:0'):
 		#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_clean'
 		#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
 
-		#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
-		#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
+		file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+		artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
 
-		file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
-		artif_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
+		#file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+		
+		#artif_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
 
 		assert os.path.isdir(file_path) == True, 'file_path already exists, please choose a different path to avoid overwriting'
 
