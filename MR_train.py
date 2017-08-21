@@ -20,10 +20,10 @@ import prednet
 from prednet import PredNet
 import PIL.Image
 from data_utils import SequenceGenerator
-WEIGHTS_DIR = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/'
-DATA_DIR =  r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/'
+#WEIGHTS_DIR = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/'
+#DATA_DIR =  r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/'
 
-#WEIGHTS_DIR = DATA_DIR = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017'
+WEIGHTS_DIR = DATA_DIR = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017'
 
 desired_im_sz = (180, 80)
 categories = ['city', 'residential', 'road']
@@ -47,12 +47,12 @@ splits = {s: [] for s in ['train', 'test']}
 splits['test'] = test_recordings
 not_train = splits['test']
 
-file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
-artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
+#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
 
-#file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
 
-#artif_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
+artif_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
 
 assert os.path.isdir(file_path) == True, 'file_path already exists, please choose a different path to avoid overwriting'
 
@@ -112,10 +112,10 @@ for person in listofnames:
 				result[:a.shape[0],:a.shape[1]] = a
 				#result = np.rot90(result)
 
-				print(a.shape)
-
-				plt.imshow(result)
-				plt.show()
+#				print(a.shape)
+#
+#				plt.imshow(result)
+#				plt.show()
 
 				temp.append(np.asarray(result))
 
