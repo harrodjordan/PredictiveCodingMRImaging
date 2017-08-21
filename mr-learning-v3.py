@@ -45,7 +45,7 @@ def import_images():
 		return c.join(words[:n]), c.join(words[n:])
   # Import data
 	file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
-	artif_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
+	artif_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/train_artifact'
 	
 	#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_clean'
 	#artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-150cases-REU/train_artifact'
@@ -64,26 +64,27 @@ def import_images():
 	for f in os.listdir(file_path):
 
 		patient = split_at(f, "_",4)[0]
-		time = os.path.splitext(f)[0][-1]
 
-		if patient not in listofnames and time == '1':
+		if patient not in listofnames 
 
 			listofnames.append(patient)
 	
 	listofnames = listofnames[1:]
 
-	
+	slices = 1
 
 	valid_images = [".jpg"]
 
 	for person in listofnames:
 		
 		for f in os.listdir(path):
+			
+			if slices > 99:
+				break 
 		
 			ext = os.path.splitext(f)[1]
-			patient = split_at(f, "_",4)[1]
 		
-			if ext.lower() not in valid_images or patient != ['time','1']:
+			if ext.lower() not in valid_images:
 				continue
 
 			name = os.path.join(path,f)
@@ -92,6 +93,7 @@ def import_images():
 
 				try:
 					temp.append(np.asarray(PIL.Image.open(name).convert('L')))
+					slices = slices + 1
 
 				except FileNotFoundError:
 					print("File " + ext + " Not found in Directory")
@@ -104,14 +106,18 @@ def import_images():
 
 	path = artif_path
 
-
+	slices = 1
+	
 	for person in listofnames:
+			
 		for f in os.listdir(path):
+			
+			if slices > 99:
+				break 
 		
 			ext = os.path.splitext(f)[1]
-			patient = split_at(f, "_",4)[1]
 		
-			if ext.lower() not in valid_images or patient != ['time','1']:
+			if ext.lower() not in valid_images:
 				continue
 
 			name = os.path.join(path,f)
@@ -120,6 +126,7 @@ def import_images():
 
 				try:
 					temp.append(np.asarray(PIL.Image.open(name).convert('L')))
+					slices = slices + 1
 
 				except FileNotFoundError:
 					print("File " + ext + " Not found in Directory")
