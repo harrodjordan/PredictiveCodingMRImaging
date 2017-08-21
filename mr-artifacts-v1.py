@@ -118,7 +118,7 @@ sum_images = np.asarray(sum_images)
 
 #save to a different directory
 
-file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/train_artifact"
+file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/train_artifact'
 
 if not os.path.isdir(file_path):
     os.makedirs(file_path)
