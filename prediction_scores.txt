@@ -1,2 +1,2 @@
-Model MSE: 5009.418924
+Model MSE: 5009.872384
 Previous Frame MSE: 1184.896107

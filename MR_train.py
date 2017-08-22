@@ -110,7 +110,7 @@ for person in listofnames:
 				result = np.zeros([256,128])
 
 				result[:a.shape[0],:a.shape[1]] = a
-				#result = np.rot90(result)
+				result = np.rot90(result)
 
 #				print(a.shape)
 #
@@ -177,7 +177,7 @@ N_seq_val = 5  # number of sequences to use for validation
 
 # Model parameters
 
-n_channels, im_height, im_width = (1, 256, 128)
+n_channels, im_height, im_width = (1, 128, 256)
 input_shape = (im_height, im_width, n_channels)
 #input_shape = (n_channels, im_height, im_width)  if K.image_data_format() == 'channels_first' else (im_height, im_width, n_channels)
 stack_sizes = (n_channels, 48, 96, 192)

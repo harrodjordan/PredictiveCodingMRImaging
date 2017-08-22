@@ -104,10 +104,17 @@ for person in listofnames:
 
             try:
                 a = np.asarray(PIL.Image.open(name).convert('L'))
-
+                    
                 result = np.zeros([256,128])
-
+                        
                 result[:a.shape[0],:a.shape[1]] = a
+                result = np.rot90(result)
+                            
+                            #				print(a.shape)
+                            #
+                            #				plt.imshow(result)
+                            #				plt.show()
+                            
                 temp.append(np.asarray(result))
 
             except FileNotFoundError:
@@ -116,8 +123,6 @@ for person in listofnames:
     
 
     temp = np.array(temp)
-
-    temp = np.reshape(temp, [temp.shape[0],temp.shape[2],temp.shape[1]])
 
 
 
@@ -191,6 +196,7 @@ f.write("Model MSE: %f\n" % mse_model)
 f.write("Previous Frame MSE: %f" % mse_prev)
 f.close()
 
+
 # Plot some predictions
 aspect_ratio = float(X_hat.shape[2]) / X_hat.shape[3]
 plt.figure(figsize = (nt, 2*aspect_ratio))
@@ -203,12 +209,12 @@ plot_idx = np.random.permutation(X_test.shape[0])[:n_plot]
 for i in plot_idx:
     for t in range(nt):
         plt.subplot(gs[t])
-        plt.imshow(X_test[i,t], interpolation='none')
+        plt.imshow(np.array(PIL.Image.fromarray(X_test[i,t]).convert("L")), interpolation='none', cmap="gray")
         plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
         if t==0: plt.ylabel('Actual', fontsize=10)
 
         plt.subplot(gs[t + nt])
-        plt.imshow(X_hat[i,t], interpolation='none')
+        plt.imshow(np.array(PIL.Image.fromarray(X_hat[i,t]).convert("L")), interpolation='none', cmap="gray")
         plt.tick_params(axis='both', which='both', bottom='off', top='off', left='off', right='off', labelbottom='off', labelleft='off')
         if t==0: plt.ylabel('Predicted', fontsize=10)
 
