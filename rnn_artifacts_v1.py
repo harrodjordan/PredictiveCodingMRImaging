@@ -103,7 +103,7 @@ def create_artifacts(path, path_out):
 	for (real, comp) in zip(real_images, complex_images):
 		temp_image = np.empty((180, 80))
 		real = np.asarray(real)
-		comp = np.asarray(comp)*(1/8*np.pi)
+		comp = np.asarray(comp)*(8*np.pi)
 
 		temp_image = np.absolute(real+comp)
 		sum_images_clean.append(temp_image)
@@ -157,7 +157,7 @@ if __name__ == '__main__':
 #	path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed'
 	path = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017/Abdominal-DCE-40cases-timeresolved-processed'
 #	path_out = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN'
-	path_out = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN'
+	path_out = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN_scaled'
 
 	create_artifacts(path, path_out)
 
