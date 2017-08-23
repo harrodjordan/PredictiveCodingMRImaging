@@ -170,7 +170,7 @@ val_sources = np.asarray(listofnames[15:])
 
 
 # Training parameters
-nb_epoch = 150
+nb_epoch = 200
 batch_size = 1
 samples_per_epoch = 15
 N_seq_val = 5  # number of sequences to use for validation
@@ -180,11 +180,11 @@ N_seq_val = 5  # number of sequences to use for validation
 n_channels, im_height, im_width = (1, 128, 256)
 input_shape = (im_height, im_width, n_channels)
 #input_shape = (n_channels, im_height, im_width)  if K.image_data_format() == 'channels_first' else (im_height, im_width, n_channels)
-stack_sizes = (n_channels, 32, 64, 128, 256)
+stack_sizes = (n_channels, 48, 96, 192)
 R_stack_sizes = stack_sizes
-A_filt_sizes = (4, 4, 4, 4)
-Ahat_filt_sizes = (4, 4, 4, 4, 4)
-R_filt_sizes = (4, 4, 4, 4, 4)
+A_filt_sizes = (3, 3, 3)
+Ahat_filt_sizes = (3, 3, 3, 3)
+R_filt_sizes = (3, 3, 3, 3)
 layer_loss_weights = np.array([1., 0., 0., 0.])  # weighting for each layer in final loss; "L_0" model:  [1, 0, 0, 0], "L_all": [1, 0.1, 0.1, 0.1]
 layer_loss_weights = np.expand_dims(layer_loss_weights, 1)
 nt = 18 # number of timesteps used for sequences in training
