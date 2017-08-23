@@ -45,10 +45,10 @@ splits = {s: [] for s in ['train', 'test']}
 splits['test'] = test_recordings
 not_train = splits['test']
 
-file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
 artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
 
-#file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
 
 #artif_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
 
@@ -149,9 +149,9 @@ n_plot = 40
 batch_size = 1
 nt = 18
 
-#WEIGHTS_DIR = DATA_DIR = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017'
+WEIGHTS_DIR = RESULTS_SAVE_DIR =  DATA_DIR = r'/mnt/raid5/jordan/Jordan-AmgenSSRP2017'
 
-WEIGHTS_DIR = RESULTS_SAVE_DIR = DATA_DIR = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/'
+#WEIGHTS_DIR = RESULTS_SAVE_DIR = DATA_DIR = r'/Users/jordanharrod/Dropbox/Jordan-project/Jordan-AmgenSSRP2017/'
 
 weights_file = os.path.join(WEIGHTS_DIR, 'prednet_kitti_weights.hdf5')
 json_file = os.path.join(WEIGHTS_DIR, 'prednet_kitti_model.json')
