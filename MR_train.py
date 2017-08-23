@@ -180,12 +180,12 @@ N_seq_val = 5  # number of sequences to use for validation
 n_channels, im_height, im_width = (1, 128, 256)
 input_shape = (im_height, im_width, n_channels)
 #input_shape = (n_channels, im_height, im_width)  if K.image_data_format() == 'channels_first' else (im_height, im_width, n_channels)
-stack_sizes = (n_channels, 24, 48, 96, 192)
+stack_sizes = (n_channels, 24, 48, 96)
 R_stack_sizes = stack_sizes
-A_filt_sizes = (3, 3, 3, 3)
-Ahat_filt_sizes = (3, 3, 3, 3, 3)
-R_filt_sizes = (3, 3, 3, 3, 3)
-layer_loss_weights = np.array([1., 0., 0., 0., 0.])  # weighting for each layer in final loss; "L_0" model:  [1, 0, 0, 0], "L_all": [1, 0.1, 0.1, 0.1]
+A_filt_sizes = (3, 3, 3)
+Ahat_filt_sizes = (3, 3, 3, 3)
+R_filt_sizes = (3, 3, 3, 3)
+layer_loss_weights = np.array([1., 0., 0., 0.])  # weighting for each layer in final loss; "L_0" model:  [1, 0, 0, 0], "L_all": [1, 0.1, 0.1, 0.1]
 layer_loss_weights = np.expand_dims(layer_loss_weights, 1)
 nt = 18 # number of timesteps used for sequences in training
 time_loss_weights = 1./ (nt - 1) * np.ones((nt,1))  # equally weight all timesteps except the first
