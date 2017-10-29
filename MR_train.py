@@ -89,9 +89,6 @@ X = []
 
 for person in listofnames:
 
-	if count > 20: 
-		break
-	
 	for f in os.listdir(path):
 	
 		ext = os.path.splitext(f)[1]
@@ -163,17 +160,18 @@ weights_file = os.path.join(WEIGHTS_DIR, 'prednet_kitti_weights.hdf5')  # where 
 json_file = os.path.join(WEIGHTS_DIR, 'prednet_kitti_model.json')
 
 # Data files
-train_file = np.asarray(X[:15])
-train_sources = np.asarray(listofnames[:15])
-val_file = np.asarray(X[15:])
-val_sources = np.asarray(listofnames[15:])
+nin = 3500
+train_file = np.asarray(X[:nin])
+train_sources = np.asarray(listofnames[:nin])
+val_file = np.asarray(X[nin:])
+val_sources = np.asarray(listofnames[nin:])
 
 
 # Training parameters
-nb_epoch = 500
-batch_size = 1
-samples_per_epoch = 15
-N_seq_val = 5  # number of sequences to use for validation
+nb_epoch = 50000
+batch_size = 500
+samples_per_epoch = 3500
+N_seq_val = 600  # number of sequences to use for validation
 
 # Model parameters
 
