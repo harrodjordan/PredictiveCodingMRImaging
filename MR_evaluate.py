@@ -45,10 +45,10 @@ splits = {s: [] for s in ['train', 'test']}
 splits['test'] = test_recordings
 not_train = splits['test']
 
-#file_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+file_path = r'/Users/jordanharrod/Dropbox/Stanford/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
 artif_path = r'/Users/jordanharrod/Dropbox/Jordan-project/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
 
-file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
+#file_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/clean'
 
 #artif_path = r'/mnt/raid5/jordan/Abdominal-DCE-40cases-timeresolved-processed_RNN/artifacts'
 
@@ -86,9 +86,6 @@ count = 0
 X = []
 
 for person in listofnames:
-
-    if count > 20: 
-        break
     
     for f in os.listdir(path):
     
@@ -190,10 +187,14 @@ X_hat = np.squeeze(X_hat)
 # Compare MSE of PredNet predictions vs. using last frame.  Write results to prediction_scores.txt
 mse_model = np.mean( (X_test[:, 1:] - X_hat[:, 1:])**2 )  # look at all timesteps except the first
 mse_prev = np.mean( (X_test[:, :-1] - X_test[:, 1:])**2 )
+mse_model_total = ( (X_test[:, 1:] - X_hat[:, 1:])**2 ) 
+mse_prev_total = ( (X_test[:, :-1] - X_test[:, 1:])**2 )
 if not os.path.exists(RESULTS_SAVE_DIR): os.mkdir(RESULTS_SAVE_DIR)
 f = open(RESULTS_SAVE_DIR + 'prediction_scores.txt', 'w')
 f.write("Model MSE: %f\n" % mse_model)
-f.write("Previous Frame MSE: %f" % mse_prev)
+f.write("Previous Frame MSE: %f" % mse_prev_total)
+f.write("Model MSE All: %f\n" % mse_model)
+f.write("Previous Frame MSE All: %f" % mse_prev_total)
 f.close()
 
 
